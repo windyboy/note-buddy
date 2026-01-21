@@ -1,0 +1,1515 @@
+openapi: 3.0.3
+info:
+  title: Opencode Client API
+  description: API contracts for Opencode client plugin integration
+  version: 1.0.0
+  contact:
+    name: Opencode Client
+
+servers:
+  - url: { serverUrl }
+    description: Opencode server (configured in plugin settings)
+
+paths:
+  /global/health:
+    get:
+      summary: Get health
+      description: Get health information about the OpenCode server.
+      operationId: global.health
+      responses:
+        "200":
+          description: Health information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthCheck"
+        "503":
+          description: Server is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInfo"
+
+  /session:
+    post:
+      summary: Create session
+      description: Create a new OpenCode session for interacting with AI assistants
+      operationId: session.create
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionRequest"
+      responses:
+        "201":
+          description: Successfully created session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInfo"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInfo"
+
+  /session/{sessionID}:
+    get:
+      summary: Get session
+      description: Retrieve detailed information about a specific OpenCode session.
+      operationId: session.get
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionID
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^ses.*
+      responses:
+        "200":
+          description: Get session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInfo"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInfo"
+    delete:
+      summary: Delete session
+      description: Delete a session and permanently remove all associated data, including messages and todos.
+      operationId: session.delete
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionID
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^ses.*
+      responses:
+        "200":
+          description: Successfully deleted session
+          content:
+            application/json:
+              schema:
+                type: boolean
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInfo"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInfo"
+
+  /session/{sessionID}/message:
+    post:
+      summary: Send message
+      description: Create and send a new message to a session, streaming the AI response.
+      operationId: session.prompt
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionID
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^ses.*
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueryRequest"
+      responses:
+        "200":
+          description: Created message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInfo"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInfo"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+
+  schemas:
+    HealthCheck:
+      type: object
+      required:
+        - healthy
+        - version
+      properties:
+        healthy:
+          type: boolean
+          const: true
+        version:
+          type: string
+
+    QueryRequest:
+      type: object
+      properties:
+        messageID:
+          type: string
+          pattern: ^msg.*
+        model:
+          type: object
+          properties:
+            providerID:
+              type: string
+            modelID:
+              type: string
+          required:
+            - providerID
+            - modelID
+        agent:
+          type: string
+        noReply:
+          type: boolean
+        tools:
+          type: object
+          propertyNames:
+            type: string
+          additionalProperties:
+            type: boolean
+        system:
+          type: string
+        variant:
+          type: string
+        parts:
+          type: array
+          items:
+            anyOf:
+              - $ref: "#/components/schemas/TextPartInput"
+              - $ref: "#/components/schemas/FilePartInput"
+              - $ref: "#/components/schemas/AgentPartInput"
+              - $ref: "#/components/schemas/SubtaskPartInput"
+      required:
+        - parts
+
+    TextPartInput:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          const: text
+        text:
+          type: string
+        synthetic:
+          type: boolean
+        ignored:
+          type: boolean
+        time:
+          type: object
+          properties:
+            start:
+              type: number
+            end:
+              type: number
+          required:
+            - start
+            - end
+        metadata:
+          type: object
+          propertyNames:
+            type: string
+          additionalProperties: true
+      required:
+        - type
+        - text
+
+    FilePartInput:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          const: file
+        mime:
+          type: string
+        filename:
+          type: string
+        url:
+          type: string
+        source:
+          $ref: "#/components/schemas/FilePartSource"
+      required:
+        - type
+        - mime
+        - filename
+        - url
+        - source
+
+    AgentPartInput:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          const: agent
+        name:
+          type: string
+        source:
+          type: object
+          properties:
+            value:
+              type: string
+            start:
+              type: integer
+              minimum: 0
+            end:
+              type: integer
+              minimum: 0
+          required:
+            - value
+            - start
+            - end
+      required:
+        - type
+        - name
+        - source
+
+    SubtaskPartInput:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          const: subtask
+        prompt:
+          type: string
+        description:
+          type: string
+        agent:
+          type: string
+        model:
+          type: object
+          properties:
+            providerID:
+              type: string
+            modelID:
+              type: string
+          required:
+            - providerID
+            - modelID
+        command:
+          type: string
+      required:
+        - type
+        - prompt
+
+    FilePartSource:
+      anyOf:
+        - $ref: "#/components/schemas/FileSource"
+        - $ref: "#/components/schemas/SymbolSource"
+        - $ref: "#/components/schemas/ResourceSource"
+
+    FileSource:
+      type: object
+      properties:
+        text:
+          $ref: "#/components/schemas/FilePartSourceText"
+        type:
+          type: string
+          const: file
+        path:
+          type: string
+      required:
+        - text
+        - type
+        - path
+
+    FilePartSourceText:
+      type: object
+      properties:
+        value:
+          type: string
+        start:
+          type: integer
+          minimum: 0
+        end:
+          type: integer
+          minimum: 0
+      required:
+        - value
+        - start
+        - end
+
+    SymbolSource:
+      type: object
+      properties:
+        text:
+          $ref: "#/components/schemas/FilePartSourceText"
+        type:
+          type: string
+          const: symbol
+        path:
+          type: string
+        range:
+          $ref: "#/components/schemas/Range"
+        name:
+          type: string
+        kind:
+          type: integer
+          minimum: 0
+          maximum: 25
+      required:
+        - text
+        - type
+        - path
+        - range
+        - name
+        - kind
+
+    ResourceSource:
+      type: object
+      properties:
+        text:
+          $ref: "#/components/schemas/FilePartSourceText"
+        type:
+          type: string
+          const: resource
+        clientName:
+          type: string
+        uri:
+          type: string
+      required:
+        - text
+        - type
+        - clientName
+        - uri
+
+    Range:
+      type: object
+      properties:
+        start:
+          type: object
+          properties:
+            line:
+              type: number
+            character:
+              type: number
+          required:
+            - line
+            - character
+        end:
+          type: object
+          properties:
+            line:
+              type: number
+            character:
+              type: number
+          required:
+            - line
+            - character
+      required:
+        - start
+        - end
+
+    QueryResponse:
+      type: object
+      properties:
+        info:
+          $ref: "#/components/schemas/UserMessage"
+        parts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Part"
+      required:
+        - info
+        - parts
+
+    UserMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionID:
+          type: string
+        role:
+          type: string
+          const: user
+        time:
+          type: object
+          properties:
+            created:
+              type: number
+          required:
+            - created
+        summary:
+          type: object
+          properties:
+            title:
+              type: string
+            body:
+              type: string
+            diffs:
+              type: array
+              items:
+                $ref: "#/components/schemas/FileDiff"
+          required:
+            - title
+            - body
+            - diffs
+        agent:
+          type: string
+        model:
+          type: object
+          properties:
+            modelID:
+              type: string
+            providerID:
+              type: string
+          required:
+            - modelID
+            - providerID
+        system:
+          type: string
+        tools:
+          type: object
+          propertyNames:
+            type: string
+          additionalProperties:
+            type: boolean
+        variant:
+          type: string
+      required:
+        - id
+        - sessionID
+        - role
+        - time
+
+    FileDiff:
+      type: object
+      properties:
+        file:
+          type: string
+        before:
+          type: string
+        after:
+          type: string
+        additions:
+          type: number
+        deletions:
+          type: number
+      required:
+        - file
+        - before
+        - after
+        - additions
+        - deletions
+
+    SessionRequest:
+      type: object
+      properties:
+        parentID:
+          type: string
+          pattern: ^ses.*
+        title:
+          type: string
+        permission:
+          $ref: "#/components/schemas/PermissionConfig"
+      required: []
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+          pattern: ^ses.*
+        slug:
+          type: string
+        projectID:
+          type: string
+        directory:
+          type: string
+        parentID:
+          type: string
+          pattern: ^ses.*
+        summary:
+          type: object
+          properties:
+            additions:
+              type: number
+            deletions:
+              type: number
+            files:
+              type: number
+            diffs:
+              type: array
+              items:
+                $ref: "#/components/schemas/FileDiff"
+          required:
+            - additions
+            - deletions
+            - files
+            - diffs
+        share:
+          type: object
+          properties:
+            url:
+              type: string
+          required:
+            - url
+        title:
+          type: string
+        version:
+          type: string
+        time:
+          type: object
+          properties:
+            created:
+              type: number
+            updated:
+              type: number
+            compacting:
+              type: number
+            archived:
+              type: number
+          required:
+            - created
+            - updated
+        permission:
+          $ref: "#/components/schemas/PermissionConfig"
+        revert:
+          type: object
+          properties:
+            messageID:
+              type: string
+            partID:
+              type: string
+            snapshot:
+              type: string
+            diff:
+              type: string
+          required:
+            - messageID
+            - partID
+            - snapshot
+            - diff
+      required:
+        - id
+        - directory
+        - time
+
+    PermissionConfig:
+      anyOf:
+        - type: object
+          properties:
+            __originalKeys:
+              type: array
+              items:
+                type: string
+            read:
+              $ref: "#/components/schemas/PermissionObjectConfig"
+            edit:
+              $ref: "#/components/schemas/PermissionObjectConfig"
+            glob:
+              $ref: "#/components/schemas/PermissionObjectConfig"
+            grep:
+              $ref: "#/components/schemas/PermissionObjectConfig"
+            list:
+              $ref: "#/components/schemas/PermissionObjectConfig"
+            bash:
+              $ref: "#/components/schemas/PermissionObjectConfig"
+            task:
+              $ref: "#/components/schemas/PermissionObjectConfig"
+            external_directory:
+              $ref: "#/components/schemas/PermissionObjectConfig"
+            todowrite:
+              $ref: "#/components/schemas/PermissionObjectConfig"
+            todoread:
+              $ref: "#/components/schemas/PermissionObjectConfig"
+            question:
+              $ref: "#/components/schemas/PermissionObjectConfig"
+            webfetch:
+              $ref: "#/components/schemas/PermissionObjectConfig"
+            websearch:
+              $ref: "#/components/schemas/PermissionObjectConfig"
+            codesearch:
+              $ref: "#/components/schemas/PermissionObjectConfig"
+            lsp:
+              $ref: "#/components/schemas/PermissionObjectConfig"
+            doom_loop:
+              $ref: "#/components/schemas/PermissionObjectConfig"
+          additionalProperties:
+            $ref: "#/components/schemas/PermissionRuleConfig"
+        - $ref: "#/components/schemas/PermissionRuleset"
+
+    PermissionObjectConfig:
+      type: object
+      propertyNames:
+        type: string
+      additionalProperties:
+        $ref: "#/components/schemas/PermissionActionConfig"
+
+    PermissionActionConfig:
+      type: string
+      enum:
+        - allow
+        - deny
+        - ask
+
+    PermissionRuleConfig:
+      anyOf:
+        - $ref: "#/components/schemas/PermissionActionConfig"
+        - $ref: "#/components/schemas/PermissionRule"
+
+    PermissionRule:
+      type: object
+      properties:
+        permission:
+          type: string
+        pattern:
+          type: string
+        action:
+          $ref: "#/components/schemas/PermissionActionConfig"
+      required:
+        - permission
+        - pattern
+        - action
+
+    PermissionRuleset:
+      type: array
+      items:
+        $ref: "#/components/schemas/PermissionRule"
+
+    Message:
+      anyOf:
+        - $ref: "#/components/schemas/UserMessage"
+        - $ref: "#/components/schemas/AssistantMessage"
+
+    AssistantMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionID:
+          type: string
+        role:
+          type: string
+          const: assistant
+        time:
+          type: object
+          properties:
+            created:
+              type: number
+            completed:
+              type: number
+          required:
+            - created
+        error:
+          anyOf:
+            - $ref: "#/components/schemas/ProviderAuthError"
+            - $ref: "#/components/schemas/UnknownError"
+            - $ref: "#/components/schemas/MessageOutputLengthError"
+            - $ref: "#/components/schemas/MessageAbortedError"
+            - $ref: "#/components/schemas/APIError"
+        parentID:
+          type: string
+        modelID:
+          type: string
+        providerID:
+          type: string
+        mode:
+          type: string
+        agent:
+          type: string
+        path:
+          type: object
+          properties:
+            cwd:
+              type: string
+            root:
+              type: string
+          required:
+            - cwd
+            - root
+        summary:
+          type: boolean
+        cost:
+          type: number
+        tokens:
+          type: object
+          properties:
+            input:
+              type: number
+            output:
+              type: number
+            reasoning:
+              type: number
+            cache:
+              type: object
+              properties:
+                read:
+                  type: number
+                write:
+                  type: number
+              required:
+                - read
+                - write
+          required:
+            - input
+            - output
+        finish:
+          type: string
+      required:
+        - id
+        - sessionID
+        - role
+        - time
+
+    ProviderAuthError:
+      type: object
+      properties:
+        name:
+          type: string
+          const: ProviderAuthError
+        data:
+          type: object
+          properties:
+            providerID:
+              type: string
+            message:
+              type: string
+          required:
+            - providerID
+            - message
+      required:
+        - name
+        - data
+
+    UnknownError:
+      type: object
+      properties:
+        name:
+          type: string
+          const: UnknownError
+        data:
+          type: object
+          properties:
+            message:
+              type: string
+          required:
+            - message
+      required:
+        - name
+        - data
+
+    MessageOutputLengthError:
+      type: object
+      properties:
+        name:
+          type: string
+          const: MessageOutputLengthError
+        data:
+          type: object
+          properties: {}
+      required:
+        - name
+        - data
+
+    MessageAbortedError:
+      type: object
+      properties:
+        name:
+          type: string
+          const: MessageAbortedError
+        data:
+          type: object
+          properties:
+            message:
+              type: string
+          required:
+            - message
+      required:
+        - name
+        - data
+
+    APIError:
+      type: object
+      properties:
+        name:
+          type: string
+          const: APIError
+        data:
+          type: object
+          properties:
+            message:
+              type: string
+            statusCode:
+              type: number
+            isRetryable:
+              type: boolean
+            responseHeaders:
+              type: object
+              propertyNames:
+                type: string
+              additionalProperties:
+                type: string
+            responseBody:
+              type: string
+            metadata:
+              type: object
+              propertyNames:
+                type: string
+              additionalProperties:
+                type: string
+          required:
+            - message
+      required:
+        - name
+        - data
+
+    Part:
+      anyOf:
+        - $ref: "#/components/schemas/TextPart"
+        - $ref: "#/components/schemas/ReasoningPart"
+        - $ref: "#/components/schemas/FilePart"
+        - $ref: "#/components/schemas/ToolPart"
+        - $ref: "#/components/schemas/StepStartPart"
+        - $ref: "#/components/schemas/StepFinishPart"
+        - $ref: "#/components/schemas/SnapshotPart"
+        - $ref: "#/components/schemas/PatchPart"
+        - $ref: "#/components/schemas/AgentPart"
+        - $ref: "#/components/schemas/RetryPart"
+        - $ref: "#/components/schemas/CompactionPart"
+        - type: object
+          properties:
+            id:
+              type: string
+            sessionID:
+              type: string
+            messageID:
+              type: string
+            type:
+              type: string
+              const: subtask
+            prompt:
+              type: string
+            description:
+              type: string
+            agent:
+              type: string
+            model:
+              type: object
+              properties:
+                providerID:
+                  type: string
+                modelID:
+                  type: string
+              required:
+                - providerID
+                - modelID
+            command:
+              type: string
+          required:
+            - id
+            - sessionID
+            - messageID
+            - type
+            - prompt
+
+    TextPart:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionID:
+          type: string
+        messageID:
+          type: string
+        type:
+          type: string
+          const: text
+        text:
+          type: string
+        synthetic:
+          type: boolean
+        ignored:
+          type: boolean
+        time:
+          type: object
+          properties:
+            start:
+              type: number
+            end:
+              type: number
+          required:
+            - start
+            - end
+        metadata:
+          type: object
+          propertyNames:
+            type: string
+          additionalProperties: true
+      required:
+        - id
+        - sessionID
+        - messageID
+        - type
+        - text
+
+    ReasoningPart:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionID:
+          type: string
+        messageID:
+          type: string
+        type:
+          type: string
+          const: reasoning
+        text:
+          type: string
+        metadata:
+          type: object
+          propertyNames:
+            type: string
+          additionalProperties: true
+        time:
+          type: object
+          properties:
+            start:
+              type: number
+            end:
+              type: number
+          required:
+            - start
+            - end
+      required:
+        - id
+        - sessionID
+        - messageID
+        - type
+        - text
+
+    FilePart:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionID:
+          type: string
+        messageID:
+          type: string
+        type:
+          type: string
+          const: file
+        mime:
+          type: string
+        filename:
+          type: string
+        url:
+          type: string
+        source:
+          $ref: "#/components/schemas/FilePartSource"
+      required:
+        - id
+        - sessionID
+        - messageID
+        - type
+        - mime
+        - filename
+        - url
+        - source
+
+    ToolPart:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionID:
+          type: string
+        messageID:
+          type: string
+        type:
+          type: string
+          const: tool
+        callID:
+          type: string
+        tool:
+          type: string
+        state:
+          $ref: "#/components/schemas/ToolState"
+        metadata:
+          type: object
+          propertyNames:
+            type: string
+          additionalProperties: true
+      required:
+        - id
+        - sessionID
+        - messageID
+        - type
+        - callID
+        - tool
+        - state
+
+    ToolState:
+      anyOf:
+        - $ref: "#/components/schemas/ToolStatePending"
+        - $ref: "#/components/schemas/ToolStateRunning"
+        - $ref: "#/components/schemas/ToolStateCompleted"
+        - $ref: "#/components/schemas/ToolStateError"
+
+    ToolStatePending:
+      type: object
+      properties:
+        status:
+          type: string
+          const: pending
+        input:
+          type: object
+          propertyNames:
+            type: string
+          additionalProperties: true
+        raw:
+          type: string
+      required:
+        - status
+        - input
+
+    ToolStateRunning:
+      type: object
+      properties:
+        status:
+          type: string
+          const: running
+        input:
+          type: object
+          propertyNames:
+            type: string
+          additionalProperties: true
+        title:
+          type: string
+        metadata:
+          type: object
+          propertyNames:
+            type: string
+          additionalProperties: true
+        time:
+          type: object
+          properties:
+            start:
+              type: number
+          required:
+            - start
+      required:
+        - status
+        - input
+        - title
+
+    ToolStateCompleted:
+      type: object
+      properties:
+        status:
+          type: string
+          const: completed
+        input:
+          type: object
+          propertyNames:
+            type: string
+          additionalProperties: true
+        output:
+          type: string
+        title:
+          type: string
+        metadata:
+          type: object
+          propertyNames:
+            type: string
+          additionalProperties: true
+        time:
+          type: object
+          properties:
+            start:
+              type: number
+            end:
+              type: number
+            compacted:
+              type: number
+          required:
+            - start
+            - end
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/FilePart"
+      required:
+        - status
+        - input
+        - output
+        - title
+
+    ToolStateError:
+      type: object
+      properties:
+        status:
+          type: string
+          const: error
+        input:
+          type: object
+          propertyNames:
+            type: string
+          additionalProperties: true
+        error:
+          type: string
+        metadata:
+          type: object
+          propertyNames:
+            type: string
+          additionalProperties: true
+        time:
+          type: object
+          properties:
+            start:
+              type: number
+            end:
+              type: number
+          required:
+            - start
+            - end
+      required:
+        - status
+        - input
+        - error
+
+    StepStartPart:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionID:
+          type: string
+        messageID:
+          type: string
+        type:
+          type: string
+          const: step-start
+        snapshot:
+          type: string
+      required:
+        - id
+        - sessionID
+        - messageID
+        - type
+        - snapshot
+
+    StepFinishPart:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionID:
+          type: string
+        messageID:
+          type: string
+        type:
+          type: string
+          const: step-finish
+        reason:
+          type: string
+        snapshot:
+          type: string
+        cost:
+          type: number
+        tokens:
+          type: object
+          properties:
+            input:
+              type: number
+            output:
+              type: number
+            reasoning:
+              type: number
+            cache:
+              type: object
+              properties:
+                read:
+                  type: number
+                write:
+                  type: number
+              required:
+                - read
+                - write
+          required:
+            - input
+            - output
+      required:
+        - id
+        - sessionID
+        - messageID
+        - type
+        - reason
+        - snapshot
+
+    SnapshotPart:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionID:
+          type: string
+        messageID:
+          type: string
+        type:
+          type: string
+          const: snapshot
+        snapshot:
+          type: string
+      required:
+        - id
+        - sessionID
+        - messageID
+        - type
+        - snapshot
+
+    PatchPart:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionID:
+          type: string
+        messageID:
+          type: string
+        type:
+          type: string
+          const: patch
+        hash:
+          type: string
+        files:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - sessionID
+        - messageID
+        - type
+        - hash
+        - files
+
+    AgentPart:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionID:
+          type: string
+        messageID:
+          type: string
+        type:
+          type: string
+          const: agent
+        name:
+          type: string
+        source:
+          type: object
+          properties:
+            value:
+              type: string
+            start:
+              type: integer
+              minimum: 0
+            end:
+              type: integer
+              minimum: 0
+          required:
+            - value
+            - start
+            - end
+      required:
+        - id
+        - sessionID
+        - messageID
+        - type
+        - name
+        - source
+
+    RetryPart:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionID:
+          type: string
+        messageID:
+          type: string
+        type:
+          type: string
+          const: retry
+        attempt:
+          type: number
+        error:
+          $ref: "#/components/schemas/APIError"
+        time:
+          type: object
+          properties:
+            created:
+              type: number
+          required:
+            - created
+      required:
+        - id
+        - sessionID
+        - messageID
+        - type
+        - attempt
+        - error
+
+    CompactionPart:
+      type: object
+      properties:
+        id:
+          type: string
+        sessionID:
+          type: string
+        messageID:
+          type: string
+        type:
+          type: string
+          const: compaction
+        auto:
+          type: boolean
+      required:
+        - id
+        - sessionID
+        - messageID
+        - type
+
+    NoteMetadata:
+      type: object
+      properties:
+        id:
+          type: string
+          pattern: ^note.*
+        path:
+          type: string
+        title:
+          type: string
+          maxLength: 256
+        content:
+          type: string
+          maxLength: 1048576
+        tags:
+          type: array
+          items:
+            type: string
+          maxItems: 50
+        createdAt:
+          type: number
+        modifiedAt:
+          type: number
+        frontmatter:
+          type: object
+          additionalProperties: true
+      required:
+        - id
+        - path
+        - title
+        - content
+        - createdAt
+        - modifiedAt
+
+    Source:
+      type: object
+      properties:
+        id:
+          type: string
+        path:
+          type: string
+        title:
+          type: string
+        excerpt:
+          type: string
+        relevanceScore:
+          type: number
+          minimum: 0
+          maximum: 1
+      required:
+        - id
+        - path
+        - title
+        - excerpt
+        - relevanceScore
+
+    TokenUsage:
+      type: object
+      properties:
+        promptTokens:
+          type: number
+          minimum: 0
+        completionTokens:
+          type: number
+          minimum: 0
+        totalCost:
+          type: number
+          minimum: 0
+      required:
+        - promptTokens
+        - completionTokens
+
+    ErrorInfo:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        recoverable:
+          type: boolean

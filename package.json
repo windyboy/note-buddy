@@ -1,0 +1,35 @@
+{
+  "name": "note-buddy",
+  "version": "1.0.0",
+  "description": "Obsidian plugin for OpenCode API integration",
+  "main": "main.js",
+  "scripts": {
+    "dev": "bun run build --watch",
+    "build": "node esbuild.config.mjs",
+    "build:prod": "node esbuild.config.mjs production",
+    "typecheck": "bunx tsc --noEmit",
+    "lint": "bunx eslint src --ext .ts",
+    "test": "bun test",
+    "format": "bunx prettier --write \"src/**/*.ts\""
+  },
+  "keywords": ["obsidian", "plugin", "opencode", "ai"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
+    "builtin-modules": "^3.3.0",
+    "eslint": "^8.56.0",
+    "esbuild": "^0.20.0",
+    "obsidian": "latest",
+    "prettier": "^3.2.5",
+    "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "ky": "^1.2.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

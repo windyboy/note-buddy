@@ -1,0 +1,10 @@
+{
+	"id": "note-buddy",
+	"name": "NoteBuddy",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "OpenCode AI integration for Obsidian",
+	"author": "Your Name",
+	"authorUrl": "https://github.com/yourusername",
+	"isDesktopOnly": false
+}
