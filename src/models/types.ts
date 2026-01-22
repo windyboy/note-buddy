@@ -1,58 +1,60 @@
-export enum MessageType {
-	User = 'user',
-	Assistant = 'assistant',
-	System = 'system',
+export enum Role {
+  User = "user",
+  Assistant = "assistant",
+  System = "system",
 }
 
 export interface Message {
-	id: string;
-	role: MessageType;
-	content: string;
-	timestamp: number;
+  id: string;
+  role: Role;
+  content: string;
+  referencedNoteIds: string[]; // Paths to the notes cited
+  timestamp: number;
 }
 
 export interface Session {
-	id: string;
-	createdAt: number;
-	updatedAt: number;
-	messages: Message[];
-	metadata?: Record<string, unknown>;
+  id: string;
+  title: string;
+  messages: Message[];
+  createdAt: number;
+  updatedAt: number;
+  metadata?: Record<string, any>;
 }
 
-export interface Note {
-	id: string;
-	title: string;
-	content: string;
-	createdAt: number;
-	updatedAt: number;
-	sessionId?: string;
-}
-
-export interface Query {
-	id: string;
-	sessionId: string;
-	query: string;
-	context?: string;
-	timestamp: number;
-}
-
-export interface QueryResponse {
-	id: string;
-	queryId: string;
-	response: string;
-	reasoning?: string;
-	parts?: Part[];
-	timestamp: number;
-}
-
-export interface Part {
-	type: 'text' | 'reasoning' | 'file' | 'tool' | 'tool_result';
-	content: string;
+export interface NoteMetadata {
+  path: string;
+  title: string;
+  tags: string[];
+  mtime: number; // For cache invalidation
 }
 
 export interface PluginSettings {
-	apiEndpoint: string;
-	apiKey: string;
-	debounceInterval: number;
-	maxHistoryLength: number;
+  serverUrl: string;
+  apiKey: string;
+  autoArchive: boolean;
+  archiveThresholdDays: number;
+  debugMode: boolean;
+}
+
+export const DEFAULT_SETTINGS: PluginSettings = {
+  serverUrl: "http://localhost:8080",
+  apiKey: "",
+  autoArchive: true,
+  archiveThresholdDays: 30,
+  debugMode: false,
+};
+
+export interface QueryRequest {
+  prompt: string;
+  sessionID: string;
+  context?: string[]; // Note contents or IDs
+}
+
+export interface QueryResponse {
+  content: string;
+  referencedNoteIds: string[];
+  suggestions?: {
+    tags?: string[];
+    links?: string[];
+  };
 }

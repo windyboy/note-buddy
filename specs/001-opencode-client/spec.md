@@ -5,7 +5,7 @@
 **Status**: Draft  
 **Input**: User description: "创建一个与opencode对话的界面，作为opencode的客户端，可以询问obsidian笔记的内容，组织笔记"
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 0 - Opencode Client Connectivity (Priority: P1)
 
@@ -89,27 +89,32 @@ A user wants to start, view, continue, and delete conversation sessions, allowin
 
 ### Edge Cases
 
-- Empty vault or no markdown files
-- Malformed/corrupted note files
-- Ambiguous queries with multiple valid interpretations
-- Very large notes that exceed typical processing limits
-- Vault path does not exist or is inaccessible
-- Notes with special characters or non-standard markdown
-- AI service unavailable or times out
+- **EC-001**: Empty vault or no markdown files - System MUST inform user and handle gracefully without crashing.
+- **EC-002**: Malformed/corrupted note files - System MUST skip invalid files and log errors to the Obsidian console.
+- **EC-003**: Ambiguous queries - System MUST present a "Clarification Required" UI pattern with up to 3 suggested interpretations as clickable buttons.
+- **EC-004**: Very large notes (>1MB) - System MUST process content in 4KB chunks. If a note cannot be chunked (e.g., single massive line), the system MUST notify the user that the note is too large for context.
+- **EC-005**: Vault path does not exist - System MUST prompt user to select a valid path via Obsidian settings.
+- **EC-006**: Sanitization - All user inputs MUST be sanitized using DOMPurify-equivalent logic to prevent XSS from note content rendering.
+- **EC-007**: Connectivity Failure - System MUST retry 3 times with exponential back-off (1s, 2s, 4s) with +/- 100ms jitter. Total retry time MUST NOT exceed 10 seconds.
+- **EC-008**: Partial Failure - If the Opencode server is reachable but the AI engine fails, the system MUST distinguish between "Network Error" and "Intelligence Service Error" in the UI.
+- **EC-009**: Plugin Reload - System MUST persist the current session ID to `data.json` to allow recovery of the conversation after an Obsidian reload.
 
-## Requirements *(mandatory)*
+## Requirements
 
 ### Functional Requirements
 
-- Connect to Opencode server with configurable endpoint
-- Send prompts and display responses in UI
-- Read and parse markdown files from Obsidian vault
-- Provide conversational interface for natural language queries
-- Retrieve and reference relevant note content in responses
-- Maintain conversation context within sessions
-- Support creating, viewing, continuing, and deleting sessions
-- Handle errors gracefully with user-friendly messages
-- Provide organization suggestions (links, tags, structure) that reference notes
+- **FR-001**: System MUST connect to Opencode server with configurable endpoint.
+- **FR-002**: System MUST send prompts and display responses. Chat UI MUST support `Tab` navigation for all buttons and `Enter` for sending prompts.
+- **FR-003**: System MUST provide loading indicators: a progress bar for initial vault indexing and a pulsing "typing" indicator for query processing.
+- **FR-004**: System MUST provide conversational interface for natural language queries.
+- **FR-005**: System MUST retrieve note content. References MUST include Note Title, Path, and a Contextual Snippet.
+- **FR-006**: System MUST maintain conversation context within sessions.
+- **FR-007**: System MUST support creating, viewing, continuing, and deleting sessions.
+- **FR-008**: System MUST handle errors with "Helpful Errors" (Actionable steps included in the message).
+- **FR-009**: System MUST provide organization suggestions (links, tags, structure) that reference notes.
+- **FR-010**: System MUST support auto-archiving of sessions based on user-defined age (default: 30 days).
+- **FR-011**: System MUST support streaming vault indexing to allow the user to start querying while background indexing is in progress.
+- **FR-012**: System MUST include a "Debug Mode" toggle in settings to enable detailed console logging.
 
 ### Key Entities
 
@@ -118,21 +123,21 @@ A user wants to start, view, continue, and delete conversation sessions, allowin
 - **Obsidian Note**: A markdown file from the vault with path, title, content, and metadata
 - **Organization Suggestion**: A recommendation (link, tag, structural change) that references the relevant notes
 
-## Success Criteria *(mandatory)*
+## Success Criteria
 
-- Query responses complete within 5 seconds
-- Session creation completes within 3 seconds
-- Vaults up to 1,000 notes process without performance issues
-- Most queries return relevant, note-grounded responses
-- Follow-up context is resolved correctly in most cases
+- **SC-001**: Typical query responses (excluding retries) complete within 5 seconds.
+- **SC-002**: Session creation/switching completes within 1 second.
+- **SC-003**: Performance Scalability: Indexing operation MUST NOT block the UI thread and MUST complete within 30 seconds for 1,000 notes; Querying MUST maintain < 500ms latency for local retrieval of up to 1,000 notes.
+- **SC-004**: Groundedness: At least 85% of queries MUST cite at least one valid Note Title from the current vault. "Relevance" is defined as the citation containing keywords found in both the query and the referenced note.
+- **SC-005**: Context: Follow-up queries (e.g., "Tell me more about it") MUST resolve pronouns/references correctly in 90% of test cases using a predefined "Golden Dataset" fixture located in `tests/fixtures/golden-conversations.json`.
+- **SC-006**: Organization Performance: Link and tag suggestions (US3) MUST be generated within 3 seconds for vaults up to 1,000 notes. Tag suggestions MUST prioritize existing vault tags (90% match rate) before suggesting new ones.
 
-## Non-Functional Requirements *(optional)*
+## Non-Functional Requirements _(optional)_
 
 ### Performance
 
-- Query responses should complete within 5 seconds for typical vault sizes
-- Initial vault indexing should complete within 30 seconds for vaults up to 1,000 notes
-- Session switching should complete within 1 second
+- All performance targets defined in [Success Criteria](#success-criteria) MUST be met.
+- Memory usage should stay below 100MB for typical vault operations.
 
 ### Usability
 
