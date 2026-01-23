@@ -17,12 +17,12 @@
 
 **Purpose**: Project initialization
 
-- [ ] T001 Create project structure: src/{commands,services,ui,models,utils}/, tests/, manifest.json
-- [ ] T002 Initialize tsconfig.json with strict mode and Obsidian types
-- [ ] T003 [P] Install dependencies: obsidian, @codemirror/view via bun install
-- [ ] T004 [P] Configure package.json with build scripts and test framework
-- [ ] T005 [P] Create manifest.json: id=note-assistant, minAppVersion=1.0.0
-- [ ] T006 [P] Create .gitignore: node_modules/, dist/, .obsidian/
+- [X] T001 Create project structure: src/{commands,services,ui,models,utils}/, tests/, manifest.json
+- [X] T002 Initialize tsconfig.json with strict mode and Obsidian types
+- [X] T003 [P] Install dependencies: obsidian, @codemirror/view via bun install
+- [X] T004 [P] Configure package.json with build scripts and test framework
+- [X] T005 [P] Create manifest.json: id=note-assistant, minAppVersion=1.0.0
+- [X] T006 [P] Create .gitignore: node_modules/, dist/, .obsidian/
 
 ---
 
@@ -34,34 +34,34 @@
 
 ### Models & Types
 
-- [ ] T007 [P] Create operation models in src/models/operation.ts: OperationType, OperationStatus, ErrorCode enums; OperationRequest, OperationResult, Suggestion, Position, OperationError interfaces
-- [ ] T008 [P] Create preview models in src/models/preview.ts: PreviewState, Annotation, Decision interfaces; DecisionAction enum; currentSuggestionIndex field
-- [ ] T009 [P] Create settings model in src/models/settings.ts: NoteAssistantSettings interface, DEFAULT_SETTINGS constant
+- [X] T007 [P] Create operation models in src/models/operation.ts: OperationType, OperationStatus, ErrorCode enums; OperationRequest, OperationResult, Suggestion, Position, OperationError interfaces
+- [X] T008 [P] Create preview models in src/models/preview.ts: PreviewState, Annotation, Decision interfaces; DecisionAction enum; currentSuggestionIndex field
+- [X] T009 [P] Create settings model in src/models/settings.ts: NoteAssistantSettings interface, DEFAULT_SETTINGS constant
 
 ### Core Services
 
-- [ ] T010 Create main plugin class in src/plugin.ts: onload/onunload lifecycle, settings management, command registration
-- [ ] T011 Create OpenCodeClient in src/services/opencode-client.ts: constructor(endpoint), createSession(), sendMessage(), deleteSession()
-- [ ] T012 Create OperationQueue in src/services/operation-queue.ts: enqueue(), processQueue(), cancel() with AbortController, session lifecycle management
+- [X] T010 Create main plugin class in src/plugin.ts: onload/onunload lifecycle, settings management, command registration
+- [X] T011 Create OpenCodeClient in src/services/opencode-client.ts: constructor(endpoint), createSession(), sendMessage(), deleteSession()
+- [X] T012 Create OperationQueue in src/services/operation-queue.ts: enqueue(), processQueue(), cancel() with AbortController, session lifecycle management
 
 ### Utilities
 
-- [ ] T014 [P] Create markdown utilities in src/utils/markdown.ts: line-based parsing, heading detection, section finding/creation
+- [X] T014 [P] Create markdown utilities in src/utils/markdown.ts: line-based parsing, heading detection, section finding/creation
 
 ### UI Components
 
-- [ ] T016 [P] Create AnnotationWidget in src/ui/annotations.ts: extends CodeMirror WidgetType, toDOM() rendering, Accept/Reject/Edit buttons, sequential display with next/prev navigation
-- [ ] T017 [P] Create loading overlay in src/ui/loading.ts: semi-transparent editor overlay with spinner
-- [ ] T018 [P] Create banner notification in src/ui/banner.ts: queue status display, cancel button
-- [ ] T019 [P] Create styles.css: annotation styling (light yellow/blue #FFF9E6/#E6F3FF), overlay (rgba(0,0,0,0.1)), banner
+- [X] T016 [P] Create AnnotationWidget in src/ui/annotations.ts: extends CodeMirror WidgetType, toDOM() rendering, Accept/Reject/Edit buttons, sequential display with next/prev navigation
+- [X] T017 [P] Create loading overlay in src/ui/loading.ts: semi-transparent editor overlay with spinner
+- [X] T018 [P] Create banner notification in src/ui/banner.ts: queue status display, cancel button
+- [X] T019 [P] Create styles.css: annotation styling (light yellow/blue #FFF9E6/#E6F3FF), overlay (rgba(0,0,0,0.1)), banner
 
 ### Infrastructure Setup
 
-- [ ] T020 Create VaultCache in src/services/vault-cache.ts: app.vault.getMarkdownFiles(), event-driven updates (create/delete/rename)
-- [ ] T021 Implement settings tab in src/plugin.ts: endpoint URL input, "Test Connection" button, relaxed URL validation
-- [ ] T022 Add health check in src/services/opencode-client.ts: GET /global/health before operations
-- [ ] T023 Add offline detection in src/plugin.ts: disable operations, show error message
-- [ ] T024 [P] Add text selection support (not just full note) in all commands: extract selected text, fallback to full note
+- [X] T020 Create VaultCache in src/services/vault-cache.ts: app.vault.getMarkdownFiles(), event-driven updates (create/delete/rename)
+- [X] T021 Implement settings tab in src/plugin.ts: endpoint URL input, "Test Connection" button, relaxed URL validation
+- [X] T022 Add health check in src/services/opencode-client.ts: GET /global/health before operations
+- [X] T023 Add offline detection in src/plugin.ts: disable operations, show error message
+- [X] T024 [P] Add text selection support (not just full note) in all commands: extract selected text, fallback to full note
 
 **Checkpoint**: Foundation complete - user stories can begin
 
@@ -73,12 +73,12 @@
 
 **Test**: Multi-paragraph note → trigger command → verify annotation with summary → test accept/reject/edit
 
-- [ ] T025 [P] [US1] Create summarize command in src/commands/summarize.ts: extract note content, build prompt template
-- [ ] T026 [US1] Register "Note Assistant: Summarize" in src/plugin.ts
-- [ ] T027 [US1] Integrate command with OperationQueue.enqueue() in src/commands/summarize.ts
-- [ ] T028 [US1] Parse AI response for summary bullets in src/commands/summarize.ts
-- [ ] T029 [US1] Create annotation at note top with Accept/Reject/Edit handlers in src/commands/summarize.ts
-- [ ] T030 [US1] Add loading overlay and error handling: empty response ("Note too short"), session failure (retry button)
+- [X] T025 [P] [US1] Create summarize command in src/commands/summarize.ts: extract note content, build prompt template
+- [X] T026 [US1] Register "Note Assistant: Summarize" in src/plugin.ts
+- [X] T027 [US1] Integrate command with OperationQueue.enqueue() in src/commands/summarize.ts
+- [X] T028 [US1] Parse AI response for summary bullets in src/commands/summarize.ts
+- [X] T029 [US1] Create annotation at note top with Accept/Reject/Edit handlers in src/commands/summarize.ts
+- [X] T030 [US1] Add loading overlay and error handling: empty response ("Note too short"), session failure (retry button)
 
 **Checkpoint**: US1 complete - summarize fully functional
 
@@ -90,11 +90,11 @@
 
 **Test**: Note with "need to", "remember to" → trigger command → verify task extraction in Tasks section
 
-- [ ] T031 [P] [US2] Create extract-tasks command in src/commands/extract-tasks.ts: build prompt, parse task items
-- [ ] T032 [US2] Register "Note Assistant: Extract Tasks" in src/plugin.ts
-- [ ] T033 [US2] Format tasks with markdown checkboxes, find/create Tasks section in src/commands/extract-tasks.ts
-- [ ] T034 [US2] Create annotations with Accept handler for Tasks section insertion
-- [ ] T035 [US2] Add loading overlay and empty response handling ("No tasks found")
+- [X] T031 [P] [US2] Create extract-tasks command in src/commands/extract-tasks.ts: build prompt, parse task items
+- [X] T032 [US2] Register "Note Assistant: Extract Tasks" in src/plugin.ts
+- [X] T033 [US2] Format tasks with markdown checkboxes, find/create Tasks section in src/commands/extract-tasks.ts
+- [X] T034 [US2] Create annotations with Accept handler for Tasks section insertion
+- [X] T035 [US2] Add loading overlay and empty response handling ("No tasks found")
 
 **Checkpoint**: US2 complete - extract tasks functional
 
@@ -106,11 +106,11 @@
 
 **Test**: Unstructured note → trigger command → verify suggestions with previews → test individual accept/reject
 
-- [ ] T036 [P] [US3] Create improve-structure command in src/commands/improve-structure.ts: build prompt, parse structure suggestions
-- [ ] T037 [US3] Register "Note Assistant: Improve Structure" in src/plugin.ts
-- [ ] T038 [US3] Implement sequential suggestion display in src/commands/improve-structure.ts: one at a time, progress indicator "X of Y"
-- [ ] T039 [US3] Create annotations with before/after preview, next/prev navigation
-- [ ] T040 [US3] Add loading overlay and empty response handling ("Note structure looks good")
+- [X] T036 [P] [US3] Create improve-structure command in src/commands/improve-structure.ts: build prompt, parse structure suggestions
+- [X] T037 [US3] Register "Note Assistant: Improve Structure" in src/plugin.ts
+- [X] T038 [US3] Implement sequential suggestion display in src/commands/improve-structure.ts: one at a time, progress indicator "X of Y"
+- [X] T039 [US3] Create annotations with before/after preview, next/prev navigation
+- [X] T040 [US3] Add loading overlay and empty response handling ("Note structure looks good")
 
 **Checkpoint**: US3 complete - improve structure functional
 
@@ -122,11 +122,11 @@
 
 **Test**: Note with topics → trigger command → verify vault search → test link suggestions with edit capability
 
-- [ ] T041 [P] [US4] Create suggest-links command in src/commands/suggest-links.ts: build prompt with vault note list, parse link suggestions
-- [ ] T042 [US4] Register "Note Assistant: Suggest Links" in src/plugin.ts
-- [ ] T043 [US4] Create annotations with link explanations, Edit handler for link text/target modification
-- [ ] T044 [US4] Implement Accept handler to insert wiki-links [[note-title]]
-- [ ] T045 [US4] Add loading overlay and empty response handling ("No related notes found")
+- [X] T041 [P] [US4] Create suggest-links command in src/commands/suggest-links.ts: build prompt with vault note list, parse link suggestions
+- [X] T042 [US4] Register "Note Assistant: Suggest Links" in src/plugin.ts
+- [X] T043 [US4] Create annotations with link explanations, Edit handler for link text/target modification
+- [X] T044 [US4] Implement Accept handler to insert wiki-links [[note-title]]
+- [X] T045 [US4] Add loading overlay and empty response handling ("No related notes found")
 
 **Checkpoint**: US4 complete - suggest links functional
 
@@ -136,7 +136,7 @@
 
 **Purpose**: Edge cases and enhancements
 
-- [ ] T046 [P] Handle special markdown (tables, math, code blocks) in src/utils/markdown.ts
+- [X] T046 [P] Handle special markdown (tables, math, code blocks) in src/utils/markdown.ts
 
 ---
 

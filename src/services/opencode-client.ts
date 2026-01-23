@@ -1,86 +1,111 @@
-import ky from 'ky';
-import { Session, Message, QueryResponse, PluginSettings, MessageType } from '../models/types';
+import { NoteAssistantSettings } from '../models/settings';
+
+export interface HealthResponse {
+	healthy: boolean;
+	version: string;
+}
+
+export interface SessionResponse {
+	id: string;
+	directory: string;
+	time: {
+		created: number;
+		updated: number;
+	};
+}
+
+export interface MessagePart {
+	id?: string;
+	sessionID?: string;
+	messageID?: string;
+	type: 'text' | 'reasoning' | 'file' | 'tool' | 'tool_result';
+	text?: string;
+}
+
+export interface MessageResponse {
+	info: {
+		id: string;
+		sessionID: string;
+		role: string;
+		time: {
+			created: number;
+		};
+	};
+	parts: MessagePart[];
+}
 
 export class OpenCodeClient {
-	private settings: PluginSettings;
-	private http: typeof ky;
+	constructor(private endpoint: string) {}
 
-	constructor(settings: PluginSettings) {
-		this.settings = settings;
-		this.http = ky.create({
-			prefixUrl: settings.apiEndpoint,
+	async healthCheck(): Promise<HealthResponse> {
+		const response = await fetch(`${this.endpoint}/global/health`);
+		if (!response.ok) {
+			throw new Error(`Health check failed: ${response.statusText}`);
+		}
+		return await response.json();
+	}
+
+	async createSession(): Promise<string> {
+		const response = await fetch(`${this.endpoint}/session`, {
+			method: 'POST',
 			headers: {
-				Authorization: `Bearer ${settings.apiKey}`,
-				'Content-Type': 'application/json',
+				'Content-Type': 'application/json'
 			},
+			body: JSON.stringify({
+				title: 'Note Assistant',
+				permission: {
+					read: { '*': 'deny' },
+					edit: { '*': 'deny' },
+					bash: { '*': 'deny' }
+				}
+			})
 		});
+
+		if (!response.ok) {
+			throw new Error(`Failed to create session: ${response.statusText}`);
+		}
+
+		const session: SessionResponse = await response.json();
+		return session.id;
 	}
 
-	async createSession(): Promise<Session> {
-		const response = await this.http.post('session').json<Session>();
-		return response;
-	}
+	async sendMessage(sessionId: string, prompt: string): Promise<string> {
+		const response = await fetch(`${this.endpoint}/session/${sessionId}/message`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				parts: [
+					{
+						type: 'text',
+						text: prompt
+					}
+				]
+			})
+		});
 
-	async getSession(sessionId: string): Promise<Session> {
-		const response = await this.http.get(`session/${sessionId}`).json<Session>();
-		return response;
+		if (!response.ok) {
+			throw new Error(`Failed to send message: ${response.statusText}`);
+		}
+
+		const result: MessageResponse = await response.json();
+		
+		// Extract text from parts
+		const textParts = result.parts
+			.filter(p => p.type === 'text' && p.text)
+			.map(p => p.text || '');
+		
+		return textParts.join('\n');
 	}
 
 	async deleteSession(sessionId: string): Promise<void> {
-		await this.http.delete(`session/${sessionId}`);
-	}
-
-	async sendMessage(
-		sessionId: string,
-		message: string,
-		onChunk?: (chunk: string) => void,
-	): Promise<Message> {
-		const response = this.http.post(`session/${sessionId}/message`, {
-			json: { query: message },
+		const response = await fetch(`${this.endpoint}/session/${sessionId}`, {
+			method: 'DELETE'
 		});
 
-		if (onChunk) {
-			let fullResponse = '';
-			const text = await response.text();
-			for (let i = 0; i < text.length; i++) {
-				const chunk = text[i];
-				fullResponse += chunk;
-				onChunk(chunk);
-			}
-			return {
-				id: '',
-				role: MessageType.Assistant,
-				content: fullResponse,
-				timestamp: Date.now(),
-			};
+		if (!response.ok) {
+			throw new Error(`Failed to delete session: ${response.statusText}`);
 		}
-
-		const result = await response.json<QueryResponse>();
-		return {
-			id: result.id,
-			role: MessageType.Assistant,
-			content: result.response,
-			timestamp: result.timestamp,
-		};
-	}
-
-	async healthCheck(): Promise<boolean> {
-		try {
-			await this.http.get('global/health').json();
-			return true;
-		} catch {
-			return false;
-		}
-	}
-
-	updateSettings(settings: PluginSettings): void {
-		this.settings = settings;
-		this.http = ky.create({
-			prefixUrl: settings.apiEndpoint,
-			headers: {
-				Authorization: `Bearer ${settings.apiKey}`,
-				'Content-Type': 'application/json',
-			},
-		});
 	}
 }

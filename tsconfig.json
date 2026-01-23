@@ -4,7 +4,7 @@
     "inlineSourceMap": true,
     "inlineSources": true,
     "module": "ESNext",
-    "target": "ES6",
+    "target": "ES2019",
     "allowJs": true,
     "noImplicitAny": true,
     "moduleResolution": "node",
@@ -16,8 +16,9 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "lib": ["ES6", "DOM", "ES2017"],
-    "outDir": "dist"
+    "lib": ["ES2019", "DOM"],
+    "outDir": "dist",
+    "types": ["obsidian"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

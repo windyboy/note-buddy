@@ -1,0 +1,134 @@
+/* Annotation styling */
+.note-assistant-annotation {
+	background-color: #FFF9E6;
+	border: 1px solid #FFE066;
+	border-radius: 4px;
+	padding: 8px;
+	margin: 4px 0;
+}
+
+.note-assistant-annotation .annotation-content {
+	margin-bottom: 8px;
+}
+
+.note-assistant-annotation .annotation-explanation {
+	font-size: 0.9em;
+	color: #666;
+	margin-bottom: 8px;
+	font-style: italic;
+}
+
+.note-assistant-annotation .annotation-actions {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.note-assistant-annotation .annotation-nav {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+	margin-right: 8px;
+}
+
+.note-assistant-annotation .annotation-progress {
+	font-size: 0.9em;
+	color: #666;
+}
+
+.note-assistant-annotation button {
+	padding: 4px 8px;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	background: white;
+	cursor: pointer;
+	font-size: 0.9em;
+}
+
+.note-assistant-annotation .accept-btn {
+	background-color: #4CAF50;
+	color: white;
+	border-color: #4CAF50;
+}
+
+.note-assistant-annotation .reject-btn {
+	background-color: #f44336;
+	color: white;
+	border-color: #f44336;
+}
+
+.note-assistant-annotation .edit-btn {
+	background-color: #2196F3;
+	color: white;
+	border-color: #2196F3;
+}
+
+.note-assistant-annotation .nav-btn {
+	background-color: #e0e0e0;
+}
+
+/* Loading overlay */
+.note-assistant-loading-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.1);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	z-index: 1000;
+}
+
+.note-assistant-loading-overlay .loading-spinner {
+	border: 3px solid #f3f3f3;
+	border-top: 3px solid #3498db;
+	border-radius: 50%;
+	width: 40px;
+	height: 40px;
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
+
+.note-assistant-loading-overlay .loading-text {
+	margin-top: 16px;
+	color: #333;
+	font-weight: 500;
+}
+
+/* Banner notification */
+.note-assistant-banner {
+	background-color: #E6F3FF;
+	border: 1px solid #66B3FF;
+	border-radius: 4px;
+	padding: 8px 12px;
+	margin-bottom: 8px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.note-assistant-banner .banner-message {
+	flex: 1;
+}
+
+.note-assistant-banner .banner-queue {
+	font-size: 0.9em;
+	color: #666;
+}
+
+.note-assistant-banner .banner-cancel {
+	padding: 4px 8px;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	background: white;
+	cursor: pointer;
+	font-size: 0.9em;
+}
