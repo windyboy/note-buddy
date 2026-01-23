@@ -18,9 +18,7 @@ Obsidian plugin providing AI-powered note operations: summarization, task extrac
 - Command palette access only
 - Entire vault search for links
 - Manual retry on errors
-- Chunk processing for notes >10k words
 - Smart insertion positions (summary at top, tasks at end, structure/links in-place)
-- Global session management across all notes
 - Operation queue (sequential processing, one at a time)
 - Offline mode: completely disabled, show error message
 
@@ -87,7 +85,7 @@ Find related notes across entire vault, suggest links.
 - Empty/whitespace-only notes
 - Notes <50 words
 - Code-only notes
-- Notes >10k words (chunked processing)
+- Notes >10k words (show warning, may have performance issues)
 - Special markdown (tables, math, diagrams)
 - Partial text selections
 - Concurrent operation requests (queued sequentially)
@@ -112,11 +110,9 @@ Find related notes across entire vault, suggest links.
 - **FR-010**: Preserve markdown formatting
 - **FR-011**: Single note/selection scope only
 - **FR-012**: Link suggestions search entire vault
-- **FR-013**: Notes >10k words split into chunks
-- **FR-014**: Smart insertion - summary at note top, tasks at end, structure/links in-place
-- **FR-015**: Global session tracking across all notes for context
-- **FR-016**: Operation queue - process one operation at a time sequentially
-- **FR-017**: Offline detection - disable all operations, show clear error message
+- **FR-013**: Smart insertion - summary at note top, tasks at end, structure/links in-place
+- **FR-014**: Operation queue - process one operation at a time sequentially
+- **FR-015**: Offline detection - disable all operations, show clear error message
 
 ### Entities
 
@@ -124,18 +120,16 @@ Find related notes across entire vault, suggest links.
 - **Operation Result**: Suggestions, explanations, confidence scores
 - **Preview State**: Original content, proposed changes, user decisions
 - **Note Context**: Content, metadata (title, path), active selection
-- **Global Session**: Cross-note operation history for context understanding
 - **Operation Queue**: Pending operations awaiting sequential processing
 
 ## Success Criteria
 
 - **SC-001**: <5s response time for notes ≤5k words
-- **SC-002**: 90% summary acceptance rate
-- **SC-003**: 80% task extraction accuracy
+- **SC-002**: Summary quality acceptable to users
+- **SC-003**: Task extraction identifies actionable items
 - **SC-004**: <30s full workflow (trigger → review → accept/reject)
 - **SC-005**: Zero unintended modifications
 - **SC-006**: Support standard markdown (headings, lists, links, bold/italic)
-- **SC-007**: 40% reduction in note organization time
 
 ## Non-Functional Requirements
 

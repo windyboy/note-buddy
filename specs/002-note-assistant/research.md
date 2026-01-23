@@ -55,12 +55,12 @@
 - **Create session**: `POST /session` with title and permissions
 - **Send message**: `POST /session/{sessionID}/message` with natural language prompts
 - **Delete session**: `DELETE /session/{sessionID}`
-- **API Key**: Optional for MVP (use default empty string), add TODO for future implementation
+- **API Key**: Not used in MVP (will be added in future if needed)
 
 **Implementation Notes**:
 ```typescript
-// OpenCodeClient constructor with default apiKey
-constructor(endpoint: string, apiKey: string = '')
+// OpenCodeClient constructor (no API key for MVP)
+constructor(endpoint: string)
 
 // Session workflow
 const sessionId = await client.createSession();
@@ -70,7 +70,6 @@ await client.deleteSession(sessionId);
 
 **Error Handling**:
 - Connection refused → "Cannot connect to OpenCode service. Please check that the service is running."
-- Authentication failed → "Authentication failed. Please check your API key in settings."
 - Timeout (30s) → "Request timed out. The note may be too large."
 - Server error → "OpenCode service error. Please try again later."
 - Session creation failure → Display error with manual "Retry" button (no auto-retry)
@@ -164,93 +163,7 @@ class OperationQueue {
 
 ---
 
-### Q6: Global Session Management
-**Question**: How to maintain session context across multiple notes and operations?
-
-**Answer**: Session manager with persistent state:
-- Generate unique session ID on plugin load
-- Track operation history (note paths, operations, timestamps)
-- Include session context in OpenCode API requests
-
-**Decision**: Simple session manager with in-memory storage:
-```typescript
-class SessionManager {
-  private sessionId: string;
-  private history: OperationRecord[] = [];
-
-  constructor() {
-    this.sessionId = crypto.randomUUID();
-  }
-
-  recordOperation(notePath: string, operation: string) {
-    this.history.push({
-      notePath,
-      operation,
-      timestamp: Date.now()
-    });
-  }
-
-  getContext(): SessionContext {
-    return {
-      session_id: this.sessionId,
-      recent_operations: this.history.slice(-10)
-    };
-  }
-}
-```
-
-**Implementation Notes**:
-- Session persists for plugin lifetime (cleared on reload)
-- Include last 10 operations in context
-- No persistence to disk (privacy consideration)
-
-**References**: Standard session management patterns
-
----
-
-### Q7: Large Note Chunking (>10k words)
-**Question**: How to handle notes exceeding 10k words?
-
-**Answer**: Split into chunks, process separately, merge results.
-
-**Decision**: Semantic chunking strategy:
-- Split on heading boundaries (preserve context)
-- Target chunk size: ~5k words
-- Overlap: 200 words between chunks (100 words from end of chunk N become first 100 words of chunk N+1)
-- Share overlap equally: last 100 words of previous chunk + first 100 words of next chunk
-- Merge results maintaining original positions
-
-**Implementation Notes**:
-```typescript
-function chunkNote(content: string, maxWords: 5000): Chunk[] {
-  const lines = content.split('\n');
-  const chunks: Chunk[] = [];
-  let currentChunk: string[] = [];
-  let wordCount = 0;
-
-  for (const line of lines) {
-    const lineWords = line.split(/\s+/).length;
-
-    // Split on headings when approaching limit
-    if (wordCount + lineWords > maxWords && line.startsWith('#')) {
-      chunks.push({ lines: currentChunk, startLine: ... });
-      currentChunk = [line];
-      wordCount = lineWords;
-    } else {
-      currentChunk.push(line);
-      wordCount += lineWords;
-    }
-  }
-
-  return chunks;
-}
-```
-
-**References**: Text chunking best practices
-
----
-
-### Q8: Vault-Wide Link Search
+### Q6: Vault-Wide Link Search
 **Question**: How to search entire vault for related notes when suggesting links?
 
 **Answer**: Use Obsidian's vault API to access all markdown files.
@@ -293,7 +206,7 @@ async function getVaultNotes(): Promise<VaultNote[]> {
 
 ---
 
-### Q9: Plugin Settings & Configuration
+### Q7: Plugin Settings & Configuration
 **Question**: How to store and manage plugin settings (OpenCode endpoint URL)?
 
 **Answer**: Use Obsidian's settings API with settings tab.
@@ -337,13 +250,13 @@ class NoteAssistantPlugin extends Plugin {
 
 ---
 
-### Q10: Testing Strategy
+### Q8: Testing Strategy
 **Question**: How to test Obsidian plugin with Bun test framework?
 
 **Answer**: Three-tier testing approach:
 
 **Decision**:
-1. **Unit tests**: Test individual functions (markdown parsing, chunking, queue logic)
+1. **Unit tests**: Test individual functions (markdown parsing, queue logic)
 2. **Integration tests**: Mock OpenCode API, test command handlers
 3. **Manual tests**: Test in actual Obsidian environment
 
@@ -351,12 +264,12 @@ class NoteAssistantPlugin extends Plugin {
 ```typescript
 // Unit test example
 import { test, expect } from "bun:test";
-import { chunkNote } from "../src/utils/chunking";
+import { parseHeadings } from "../src/utils/markdown";
 
-test("chunkNote splits on headings", () => {
-  const content = "# Heading 1\nContent...\n# Heading 2\nMore...";
-  const chunks = chunkNote(content, 5000);
-  expect(chunks.length).toBeGreaterThan(0);
+test("parseHeadings extracts headings", () => {
+  const content = "# Heading 1\nContent...\n## Heading 2\nMore...";
+  const headings = parseHeadings(content);
+  expect(headings.length).toBe(2);
 });
 
 // Integration test with mock
@@ -429,15 +342,6 @@ When user clicks Edit button on an annotation:
 - Mark operation status as FAILED
 - Clear error state on successful retry
 
-### Chunk Processing Failure
-**Decision**: All-or-nothing approach
-
-- If any chunk fails, entire operation fails
-- Do not show partial results (ensures consistency)
-- Rollback any partial results on failure
-- Display clear error message with retry option
-- Maintains data integrity and completeness
-
 ### Concurrent Operations
 **Decision**: Queue-based sequential processing (confirmed)
 
@@ -478,7 +382,6 @@ When OpenCode returns empty suggestions list:
 ### Architecture Patterns
 - **Command Pattern**: Command palette handlers
 - **Queue Pattern**: Sequential operation processing
-- **Session Pattern**: Global context management
 - **Decorator Pattern**: Inline annotations via CodeMirror decorations
 
 ## Risk Assessment
@@ -487,7 +390,6 @@ When OpenCode returns empty suggestions list:
 |------|------------|--------|------------|
 | OpenCode API changes | Medium | High | Define clear contract in Phase 1, version API |
 | CodeMirror complexity | Medium | Medium | Start with simple decorations, iterate |
-| Large note performance | Low | Medium | Implement chunking, test with 10k+ word notes |
 | Offline detection | Low | Low | Simple connection check before operations |
 
 ## Phase 1 Clarifications (Resolved)
@@ -526,7 +428,6 @@ When OpenCode returns empty suggestions list:
 
 **Error Messages**:
 - Connection refused: "Cannot connect to OpenCode service. Please check that the service is running."
-- Authentication failed: "Authentication failed. Please check your API key in settings."
 - Timeout: "Request timed out. The note may be too large."
 - Server error: "OpenCode service error. Please try again later."
 

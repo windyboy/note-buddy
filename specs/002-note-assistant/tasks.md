@@ -41,14 +41,12 @@
 ### Core Services
 
 - [ ] T010 Create main plugin class in src/plugin.ts: onload/onunload lifecycle, settings management, command registration
-- [ ] T011 Create OpenCodeClient in src/services/opencode-client.ts: constructor(endpoint, apiKey=''), createSession(), sendMessage(), deleteSession()
+- [ ] T011 Create OpenCodeClient in src/services/opencode-client.ts: constructor(endpoint), createSession(), sendMessage(), deleteSession()
 - [ ] T012 Create OperationQueue in src/services/operation-queue.ts: enqueue(), processQueue(), cancel() with AbortController, session lifecycle management
-- [ ] T013 Create SessionManager in src/services/session-manager.ts: UUID generation, operation history tracking
 
 ### Utilities
 
 - [ ] T014 [P] Create markdown utilities in src/utils/markdown.ts: line-based parsing, heading detection, section finding/creation
-- [ ] T015 [P] Create chunking utilities in src/utils/chunking.ts: split notes >10k words, 100-word overlap each side, all-or-nothing processing
 
 ### UI Components
 
@@ -63,6 +61,7 @@
 - [ ] T021 Implement settings tab in src/plugin.ts: endpoint URL input, "Test Connection" button, relaxed URL validation
 - [ ] T022 Add health check in src/services/opencode-client.ts: GET /global/health before operations
 - [ ] T023 Add offline detection in src/plugin.ts: disable operations, show error message
+- [ ] T024 [P] Add text selection support (not just full note) in all commands: extract selected text, fallback to full note
 
 **Checkpoint**: Foundation complete - user stories can begin
 
@@ -74,12 +73,12 @@
 
 **Test**: Multi-paragraph note → trigger command → verify annotation with summary → test accept/reject/edit
 
-- [ ] T024 [P] [US1] Create summarize command in src/commands/summarize.ts: extract note content, build prompt template
-- [ ] T025 [US1] Register "Note Assistant: Summarize" in src/plugin.ts
-- [ ] T026 [US1] Integrate command with OperationQueue.enqueue() in src/commands/summarize.ts
-- [ ] T027 [US1] Parse AI response for summary bullets in src/commands/summarize.ts
-- [ ] T028 [US1] Create annotation at note top with Accept/Reject/Edit handlers in src/commands/summarize.ts
-- [ ] T029 [US1] Add loading overlay and error handling: empty response ("Note too short"), session failure (retry button)
+- [ ] T025 [P] [US1] Create summarize command in src/commands/summarize.ts: extract note content, build prompt template
+- [ ] T026 [US1] Register "Note Assistant: Summarize" in src/plugin.ts
+- [ ] T027 [US1] Integrate command with OperationQueue.enqueue() in src/commands/summarize.ts
+- [ ] T028 [US1] Parse AI response for summary bullets in src/commands/summarize.ts
+- [ ] T029 [US1] Create annotation at note top with Accept/Reject/Edit handlers in src/commands/summarize.ts
+- [ ] T030 [US1] Add loading overlay and error handling: empty response ("Note too short"), session failure (retry button)
 
 **Checkpoint**: US1 complete - summarize fully functional
 
@@ -91,11 +90,11 @@
 
 **Test**: Note with "need to", "remember to" → trigger command → verify task extraction in Tasks section
 
-- [ ] T030 [P] [US2] Create extract-tasks command in src/commands/extract-tasks.ts: build prompt, parse task items
-- [ ] T031 [US2] Register "Note Assistant: Extract Tasks" in src/plugin.ts
-- [ ] T032 [US2] Format tasks with markdown checkboxes, find/create Tasks section in src/commands/extract-tasks.ts
-- [ ] T033 [US2] Create annotations with Accept handler for Tasks section insertion
-- [ ] T034 [US2] Add loading overlay and empty response handling ("No tasks found")
+- [ ] T031 [P] [US2] Create extract-tasks command in src/commands/extract-tasks.ts: build prompt, parse task items
+- [ ] T032 [US2] Register "Note Assistant: Extract Tasks" in src/plugin.ts
+- [ ] T033 [US2] Format tasks with markdown checkboxes, find/create Tasks section in src/commands/extract-tasks.ts
+- [ ] T034 [US2] Create annotations with Accept handler for Tasks section insertion
+- [ ] T035 [US2] Add loading overlay and empty response handling ("No tasks found")
 
 **Checkpoint**: US2 complete - extract tasks functional
 
@@ -107,11 +106,11 @@
 
 **Test**: Unstructured note → trigger command → verify suggestions with previews → test individual accept/reject
 
-- [ ] T035 [P] [US3] Create improve-structure command in src/commands/improve-structure.ts: build prompt, parse structure suggestions
-- [ ] T036 [US3] Register "Note Assistant: Improve Structure" in src/plugin.ts
-- [ ] T037 [US3] Implement sequential suggestion display in src/commands/improve-structure.ts: one at a time, progress indicator "X of Y"
-- [ ] T038 [US3] Create annotations with before/after preview, next/prev navigation
-- [ ] T039 [US3] Add loading overlay and empty response handling ("Note structure looks good")
+- [ ] T036 [P] [US3] Create improve-structure command in src/commands/improve-structure.ts: build prompt, parse structure suggestions
+- [ ] T037 [US3] Register "Note Assistant: Improve Structure" in src/plugin.ts
+- [ ] T038 [US3] Implement sequential suggestion display in src/commands/improve-structure.ts: one at a time, progress indicator "X of Y"
+- [ ] T039 [US3] Create annotations with before/after preview, next/prev navigation
+- [ ] T040 [US3] Add loading overlay and empty response handling ("Note structure looks good")
 
 **Checkpoint**: US3 complete - improve structure functional
 
@@ -123,11 +122,11 @@
 
 **Test**: Note with topics → trigger command → verify vault search → test link suggestions with edit capability
 
-- [ ] T040 [P] [US4] Create suggest-links command in src/commands/suggest-links.ts: build prompt with vault note list, parse link suggestions
-- [ ] T041 [US4] Register "Note Assistant: Suggest Links" in src/plugin.ts
-- [ ] T042 [US4] Create annotations with link explanations, Edit handler for link text/target modification
-- [ ] T043 [US4] Implement Accept handler to insert wiki-links [[note-title]]
-- [ ] T044 [US4] Add loading overlay and empty response handling ("No related notes found")
+- [ ] T041 [P] [US4] Create suggest-links command in src/commands/suggest-links.ts: build prompt with vault note list, parse link suggestions
+- [ ] T042 [US4] Register "Note Assistant: Suggest Links" in src/plugin.ts
+- [ ] T043 [US4] Create annotations with link explanations, Edit handler for link text/target modification
+- [ ] T044 [US4] Implement Accept handler to insert wiki-links [[note-title]]
+- [ ] T045 [US4] Add loading overlay and empty response handling ("No related notes found")
 
 **Checkpoint**: US4 complete - suggest links functional
 
@@ -137,7 +136,6 @@
 
 **Purpose**: Edge cases and enhancements
 
-- [ ] T045 [P] Add text selection support (not just full note) in all commands
 - [ ] T046 [P] Handle special markdown (tables, math, code blocks) in src/utils/markdown.ts
 
 ---
@@ -172,10 +170,10 @@ T003, T004, T005, T006 (all parallel)
 ### Phase 2: Foundational
 ```
 Parallel Group 1 (Models & UI):
-T007, T008, T009, T014, T015, T016, T017, T018, T019
+T007, T008, T009, T014, T016, T017, T018, T019, T024
 
 Sequential:
-T010 (plugin) → T011 (client) → T012 (queue) → T013 (session)
+T010 (plugin) → T011 (client) → T012 (queue)
 T020 (vault cache) → T021, T022, T023 (infrastructure)
 ```
 
@@ -187,7 +185,7 @@ US1, US2, US3, US4 can run in parallel after Phase 2
 
 ### Phase 7: Polish
 ```
-T045, T046 (all parallel)
+T046 (single task)
 ```
 
 ---
@@ -196,7 +194,7 @@ T045, T046 (all parallel)
 
 ### MVP Scope
 
-**Recommended MVP**: Phase 1 + Phase 2 + Phase 3 (US1 - Summarize) = 29 tasks
+**Recommended MVP**: Phase 1 + Phase 2 + Phase 3 (US1 - Summarize) = 30 tasks
 
 Provides:
 - Complete plugin infrastructure
@@ -208,12 +206,12 @@ Provides:
 
 ### Incremental Delivery
 
-1. **Sprint 1**: Phase 1 + Phase 2 (Foundation) - 23 tasks
+1. **Sprint 1**: Phase 1 + Phase 2 (Foundation) - 24 tasks
 2. **Sprint 2**: Phase 3 (US1) - 6 tasks → MVP
 3. **Sprint 3**: Phase 4 (US2) - 5 tasks
 4. **Sprint 4**: Phase 5 (US3) - 5 tasks
 5. **Sprint 5**: Phase 6 (US4) - 5 tasks
-6. **Sprint 6**: Phase 7 (Polish) - 2 tasks
+6. **Sprint 6**: Phase 7 (Polish) - 1 task
 
 ---
 
@@ -225,9 +223,8 @@ Provides:
 
 Key areas:
 - Markdown utilities (src/utils/markdown.ts)
-- Chunking logic (src/utils/chunking.ts)
 - Operation queue (src/services/operation-queue.ts)
-- Session management (src/services/session-manager.ts)
+- OpenCode client (src/services/opencode-client.ts)
 
 ### Integration Tests
 
@@ -261,7 +258,7 @@ Mock OpenCode API:
 
 **Edge Cases**:
 - Empty note → error message
-- Note >10k words → chunking
+- Note >10k words → show warning, may have performance issues
 - Concurrent operations → queued
 - OpenCode offline → error message
 
@@ -269,39 +266,41 @@ Mock OpenCode API:
 
 ## Task Summary
 
-**Total Tasks**: 46 (reduced from 107)
+**Total Tasks**: 45 (reduced from 107, further simplified)
 
 ### Tasks by Phase
 - Phase 1 (Setup): 6 tasks
-- Phase 2 (Foundational): 17 tasks
+- Phase 2 (Foundational): 18 tasks (includes text selection support)
 - Phase 3 (US1 - Summarize): 6 tasks
 - Phase 4 (US2 - Extract Tasks): 5 tasks
 - Phase 5 (US3 - Improve Structure): 5 tasks
 - Phase 6 (US4 - Suggest Links): 5 tasks
-- Phase 7 (Polish): 2 tasks
+- Phase 7 (Polish): 1 task
 
 ### Tasks by User Story
 - US1 (Summarize - P1): 6 tasks
 - US2 (Extract Tasks - P1): 5 tasks
 - US3 (Improve Structure - P2): 5 tasks
 - US4 (Suggest Links - P3): 5 tasks
-- Infrastructure: 23 tasks
+- Infrastructure: 24 tasks
 
 ### Key Improvements
-- **Consolidated**: 107 → 46 tasks (57% reduction)
+- **Consolidated**: 107 → 45 tasks (58% reduction)
 - **Removed duplication**: US tasks focus on command logic only
-- **Moved chunking**: Phase 7 → Phase 2 (with utilities)
+- **Removed chunking**: MVP phase removed (simplified)
+- **Removed global session**: MVP phase removed (simplified)
+- **Moved text selection**: Phase 7 → Phase 2 (early implementation)
 - **Moved CSS**: Phase 7 → Phase 2 (with UI components)
 - **One task per file**: Models, utilities consolidated
 
 ### Parallel Opportunities
 - Phase 1: 4 tasks parallel
-- Phase 2: ~10 tasks parallel (models, utilities, UI)
+- Phase 2: ~10 tasks parallel (models, utilities, UI, text selection)
 - Phase 3-6: All 4 user stories parallel after Phase 2
-- Phase 7: 2 tasks parallel
+- Phase 7: 1 task
 
 ### MVP Recommendation
-**Phases 1 + 2 + 3** = 29 tasks for working MVP with summarize feature
+**Phases 1 + 2 + 3** = 30 tasks for working MVP with summarize feature
 
 ---
 

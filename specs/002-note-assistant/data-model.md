@@ -160,33 +160,7 @@ interface NoteMetadata {
 
 ---
 
-### 5. Global Session
-
-Tracks operation history across all notes for context.
-
-```typescript
-interface GlobalSession {
-  sessionId: string;             // Unique session ID (generated on plugin load)
-  startTime: number;             // Session start timestamp
-  history: OperationRecord[];    // Operation history
-}
-
-interface OperationRecord {
-  operationId: string;           // Reference to OperationRequest
-  notePath: string;              // Note path
-  operationType: OperationType;  // Operation type
-  timestamp: number;             // When operation completed
-  success: boolean;              // Whether operation succeeded
-}
-```
-
-**Relationships**:
-- One GlobalSession → Many OperationRecords
-- One OperationRecord → One OperationRequest
-
----
-
-### 6. Operation Queue
+### 5. Operation Queue
 
 Manages sequential processing of operations.
 
@@ -211,7 +185,7 @@ interface QueuedOperation {
 
 ---
 
-### 7. Plugin Settings
+### 6. Plugin Settings
 
 User-configurable plugin settings.
 
@@ -219,7 +193,6 @@ User-configurable plugin settings.
 interface NoteAssistantSettings {
   opencodeEndpoint: string;      // OpenCode service URL
   timeout: number;               // Request timeout (ms)
-  maxChunkSize: number;          // Max words per chunk
   showConfidence: boolean;       // Show confidence scores
 }
 ```
@@ -235,7 +208,7 @@ OperationRequest (created)
     ↓
 OperationQueue (enqueued)
     ↓
-OpenCode API (HTTP request with NoteContext + SessionContext)
+OpenCode API (HTTP request with NoteContext)
     ↓
 OperationResult (received)
     ↓
@@ -244,8 +217,6 @@ PreviewState (annotations created)
 User Decision (accept/reject/edit)
     ↓
 Editor Update (content modified)
-    ↓
-OperationRecord (added to GlobalSession)
 ```
 
 ---
@@ -253,7 +224,6 @@ OperationRecord (added to GlobalSession)
 ## Entity Relationships
 
 ```
-GlobalSession (1) ──< (N) OperationRecord
 OperationQueue (1) ──< (N) QueuedOperation
 QueuedOperation (N) ──> (1) OperationRequest
 OperationRequest (1) ──> (1) NoteContext

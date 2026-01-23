@@ -47,7 +47,6 @@ Follow this sequence for fastest path to working plugin:
 1. Plugin class with settings
 2. OpenCode API client
 3. Operation queue
-4. Session manager
 
 ### Phase 2: First Operation (P1)
 5. Summarize command (simplest operation)
@@ -76,13 +75,11 @@ import { Plugin } from 'obsidian';
 import { NoteAssistantSettings, DEFAULT_SETTINGS } from './models/settings';
 import { OpenCodeClient } from './services/opencode-client';
 import { OperationQueue } from './services/operation-queue';
-import { SessionManager } from './services/session-manager';
 
 export default class NoteAssistantPlugin extends Plugin {
   settings: NoteAssistantSettings;
   opencodeClient: OpenCodeClient;
   operationQueue: OperationQueue;
-  sessionManager: SessionManager;
 
   async onload() {
     await this.loadSettings();
@@ -90,7 +87,6 @@ export default class NoteAssistantPlugin extends Plugin {
     // Initialize services
     this.opencodeClient = new OpenCodeClient(this.settings.opencodeEndpoint);
     this.operationQueue = new OperationQueue(this.opencodeClient);
-    this.sessionManager = new SessionManager();
     
     // Register commands
     this.registerCommands();
@@ -131,16 +127,12 @@ export default class NoteAssistantPlugin extends Plugin {
 ```typescript
 // src/services/opencode-client.ts
 export class OpenCodeClient {
-  constructor(
-    private endpoint: string,
-    private apiKey: string = '' // TODO: Implement API key configuration in future iteration
-  ) {}
+  constructor(private endpoint: string) {}
 
   async createSession(): Promise<string> {
     const response = await fetch(`${this.endpoint}/session`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -165,7 +157,6 @@ export class OpenCodeClient {
     const response = await fetch(`${this.endpoint}/session/${sessionId}/message`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -184,8 +175,7 @@ export class OpenCodeClient {
 
   async deleteSession(sessionId: string): Promise<void> {
     await fetch(`${this.endpoint}/session/${sessionId}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${this.apiKey}` }
+      method: 'DELETE'
     });
   }
 }
@@ -269,14 +259,14 @@ class AnnotationWidget extends WidgetType {
 ### Unit Tests
 
 ```typescript
-// tests/unit/chunking.test.ts
+// tests/unit/markdown.test.ts
 import { test, expect } from "bun:test";
-import { chunkNote } from "../../src/utils/chunking";
+import { parseHeadings } from "../../src/utils/markdown";
 
-test("chunkNote splits on headings", () => {
-  const content = "# Heading 1\nContent...\n# Heading 2\nMore...";
-  const chunks = chunkNote(content, 5000);
-  expect(chunks.length).toBeGreaterThan(0);
+test("parseHeadings extracts headings", () => {
+  const content = "# Heading 1\nContent...\n## Heading 2\nMore...";
+  const headings = parseHeadings(content);
+  expect(headings.length).toBe(2);
 });
 ```
 
