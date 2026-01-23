@@ -109,3 +109,10 @@ bun --hot ./index.ts
 ```
 
 For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
+
+## Active Technologies
+- TypeScript (strict mode), Bun runtime + Obsidian Plugin API, OpenCode API client (HTTP), Markdown parser (002-note-assistant)
+- Obsidian vault (file-based), plugin settings (Obsidian API) (002-note-assistant)
+
+## Recent Changes
+- 002-note-assistant: Added TypeScript (strict mode), Bun runtime + Obsidian Plugin API, OpenCode API client (HTTP), Markdown parser

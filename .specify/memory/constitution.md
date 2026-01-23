@@ -1,60 +1,118 @@
 <!--
-SYNC IMPACT REPORT
-- Version change: [initial] → 1.0.0
-- Modified principles: None (initial version)
-- Added sections: All sections (initial version)
-- Removed sections: None
-- Templates requiring updates: None (initial version)
-- Follow-up TODOs: None
+Sync Impact Report:
+Version: 1.0.0 (initial constitution)
+Modified Principles: N/A (initial version)
+Added Sections: All sections (initial creation)
+Removed Sections: N/A
+Templates Status:
+  ✅ plan-template.md - Constitution Check section aligned
+  ✅ spec-template.md - User story prioritization aligned
+  ✅ tasks-template.md - Story-based organization aligned
+Follow-up TODOs: None
 -->
 
-# Note Buddy Constitution
+# NoteBuddy Constitution
 
 ## Core Principles
 
-### I. Obsidian Plugin Architecture (NON-NEGOTIABLE)
+### I. Specification-Driven Development
 
-All features MUST follow Obsidian plugin architecture. Plugins MUST extend `Plugin`, implement `onload`/`onunload`, use Obsidian UI APIs (modals/workspace), use `loadData`/`saveData` for state, and clean up listeners/intervals/DOM on unload.
+All features MUST begin with a formal specification that defines user scenarios, acceptance criteria, and success metrics before any implementation begins. Specifications MUST be technology-agnostic and focus on what users need, not how to build it.
 
-### II. TypeScript Discipline
+**Rationale**: Starting with clear requirements prevents scope creep, ensures alignment with user needs, and provides a testable contract for implementation success.
 
-All code MUST be TypeScript with strict mode. All function params/returns and complex structures MUST be explicitly typed. Avoid `any` (use `unknown` or unions). Shared types MUST be extracted to interfaces. `tsconfig.json` MUST enable `strictNullChecks`, `strictFunctionTypes`, and `noImplicitAny`.
+### II. Independent User Stories
 
-### III. Test-First Development
+Each user story MUST be independently testable, deliverable, and valuable on its own. Stories MUST be prioritized (P1, P2, P3...) to enable incremental delivery where implementing only P1 stories produces a viable MVP.
 
-Write unit tests before new features (TDD). Tests MUST cover command handlers, event callbacks, and data transforms. Use mocks for Obsidian APIs/workspace. Add integration tests for simulated Obsidian behavior. Run tests via `npm test` in CI.
+**Rationale**: Independent stories enable parallel development, reduce integration risk, allow early user feedback, and ensure continuous value delivery rather than big-bang releases.
 
-### IV. Async Safety and Performance
+### III. Obsidian Plugin Standards
 
-All I/O MUST be async and non-blocking. Long operations MUST surface status/progress. Debounce/throttle state writes. Clean up listeners. Respond to workspace changes within 100ms.
+All code MUST comply with Obsidian plugin API conventions and lifecycle requirements. The plugin MUST handle vault operations safely, respect user data integrity, and degrade gracefully when the Obsidian environment changes.
 
-### V. Error Handling and User Communication
+**Rationale**: Obsidian plugins operate in a constrained environment with specific APIs and user expectations. Non-compliance leads to plugin rejection, data corruption, or poor user experience.
 
-Wrap user-facing operations in try/catch. Log errors with context using Obsidian logging or `console.error`. User errors MUST be clear/actionable (localized where possible). Optional feature failures MUST degrade gracefully. Include a "debug mode" setting.
+### IV. Bun-First Development
 
-### VI. Settings and Configuration Management
+Use Bun as the primary runtime and toolchain. Prefer Bun's built-in APIs (`Bun.file`, `Bun.serve`, `bun:sqlite`) over Node.js equivalents. Use `bun test` for testing, `bun build` for bundling, and `bunx` for package execution.
 
-Use `PluginSettingTab` for settings. Provide defaults, validate on change, and persist immediately. Version the settings schema for migrations. Provide clear setting descriptions. Expose settings via API.
+**Rationale**: Bun provides faster execution, simpler APIs, and better developer experience. Standardizing on Bun reduces tooling complexity and improves build performance.
 
-## Security and Privacy
+### V. Error Handling & User Feedback
 
-Do not collect/transmit/store user data outside the vault without explicit consent. Store plugin data locally via Obsidian data API. Respect Obsidian sandboxing. Do not execute untrusted code (no remote scripts/eval). Sanitize and validate all user input.
+All error conditions MUST be handled gracefully with clear, actionable user messages. Network failures, file access errors, and API timeouts MUST NOT crash the plugin. Users MUST always understand what went wrong and what they can do about it.
+
+**Rationale**: Obsidian users expect stable, reliable plugins. Cryptic errors or crashes erode trust and make debugging impossible for non-technical users.
+
+## Quality Standards
+
+### Testing Requirements
+
+- **Unit Tests**: Required for business logic, data transformations, and utility functions
+- **Integration Tests**: Required for API interactions, vault operations, and session management
+- **Manual Testing**: Required for UI interactions and user workflows before release
+- **Test Coverage**: Aim for >80% coverage on critical paths (query processing, session management, vault indexing)
+
+### Performance Standards
+
+- Query responses MUST complete within 5 seconds for typical vault sizes (up to 1,000 notes)
+- Session operations (create, switch, delete) MUST complete within 3 seconds
+- Vault indexing MUST complete within 30 seconds for vaults up to 1,000 notes
+- UI interactions MUST feel responsive (<100ms feedback for user actions)
+
+### Code Quality
+
+- TypeScript MUST be used with strict mode enabled
+- All public APIs MUST have type definitions
+- Code MUST pass ESLint checks before commit
+- Formatting MUST be consistent (use Prettier)
 
 ## Development Workflow
 
-All new features MUST begin with a spec in `specs/` using `spec-template.md` and include user stories, acceptance criteria, and edge cases. Implementation MUST follow `/speckit.plan`. Before commit: pass ESLint and TypeScript (`npm run lint`, `npm run typecheck`). Commits MUST use conventional format. PRs MUST reference the spec.
+### Feature Development Process
+
+1. **Specify** (`/speckit.specify`): Create formal specification with user stories and acceptance criteria
+2. **Plan** (`/speckit.plan`): Generate technical plan, research findings, data models, and API contracts
+3. **Tasks** (`/speckit.tasks`): Break plan into executable tasks organized by user story
+4. **Implement** (`/speckit.implement`): Execute tasks with validation and testing
+5. **Review**: Verify constitution compliance before merge
+
+### Branch Strategy
+
+- Feature branches MUST follow pattern: `###-feature-name` (e.g., `001-opencode-client`)
+- Each feature branch corresponds to a specification in `specs/###-feature-name/`
+- Main branch MUST always be in a releasable state
+
+### Documentation Requirements
+
+- Each feature MUST have: `spec.md`, `plan.md`, `tasks.md`
+- Optional but recommended: `research.md`, `data-model.md`, `quickstart.md`, `contracts/`
+- README MUST be updated when user-facing features change
+- API contracts MUST be documented in OpenAPI format when applicable
 
 ## Governance
 
-This constitution overrides all other dev practices. All code changes MUST comply. Any violation of NON-NEGOTIABLE items requires explicit justification and documented trade-offs in the relevant spec/plan.
+### Constitution Authority
 
-Amendments require:
-1. Rationale documented
-2. SemVer bump (MAJOR removal/redefinition, MINOR addition/expansion, PATCH clarification)
-3. Maintainer review/approval
-4. Migration plan for breaking changes
-5. Update `LAST_AMENDED_DATE` in this file
+This constitution supersedes all other development practices and guidelines. When conflicts arise between this constitution and other documentation, the constitution takes precedence.
 
-All PRs/code reviews must verify compliance. Track technical debt with justification/remediation. See `.kiro/steering/project.md` and `.kiro/steering/tech.md` for runtime guidance.
+### Amendment Process
 
-**Version**: 1.0.0 | **Ratified**: 2026-01-21 | **Last Amended**: 2026-01-21
+1. Proposed amendments MUST be documented with rationale
+2. Version MUST be incremented according to semantic versioning:
+   - **MAJOR**: Backward-incompatible governance changes or principle removals
+   - **MINOR**: New principles added or materially expanded guidance
+   - **PATCH**: Clarifications, wording fixes, non-semantic refinements
+3. All dependent templates MUST be updated to reflect amendments
+4. A Sync Impact Report MUST be generated documenting changes
+
+### Compliance Review
+
+- All pull requests MUST verify compliance with constitution principles
+- Constitution violations MUST be justified and documented if exceptions are granted
+- Regular audits SHOULD be conducted to ensure ongoing compliance
+
+### Version Control
+
+**Version**: 1.0.0 | **Ratified**: 2026-01-23 | **Last Amended**: 2026-01-23
