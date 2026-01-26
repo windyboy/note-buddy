@@ -1,87 +1,147 @@
-# Tasks: Note Buddy – Initial UI (Refined)
+# Tasks: Note Buddy – Initial UI
 
-**Input**: `/specs/001-assistant-plugin/`  
-**Testing**: Manual only  
-**MVP Scope**: User Stories 1 & 2 (P1)
+> **Feature Branch**: 001-assistant-plugin
+
+> **Overview**: Implementation of initial Note Buddy plugin UI (chat sidebar view) without persistence, settings, or LLM integration.
+
+---
+
+## Dependencies and Execution Order
+
+```mermaid
+graph TD
+    A[Phase 1: Setup] --> B[Phase 2: Foundational]
+    B --> C[Phase 3: US1 - Open Chat View]
+    C --> D[Phase 4: US2 - Basic Chat UI Layout]
+    D --> E[Phase 5: Polish & Cross-Cutting]
+```
+
+**Parallel Execution Opportunities**:
+- **Phase 1**: T002, T003, T004 can run in parallel (independent config files)
+- **Phase 4**: T012, T013, T014 can run in parallel (UI components are independent)
+- **Phase 5**: T018, T019 can run in parallel (documentation and cleanup)
 
 ---
 
 ## Phase 1: Setup
 
-- [X] T001 Create project structure (`src/`, `src/views/`) and base config files
-- [X] T002 Initialize TypeScript project with Obsidian dependency (Bun)
-- [X] T003 [P] Configure tsconfig.json (strict, ES6+)
-- [X] T004 [P] Configure esbuild for Obsidian plugin
-- [X] T005 [P] Create manifest.json (id: `note-buddy`)
-- [X] T006 [P] Create package.json with build scripts
+**Goal**: Initialize project structure and configuration
 
-**Checkpoint**: Plugin builds successfully ✓
-
----
-
-## Phase 2: Foundation
-
-- [X] T007 Create Plugin class in `src/main.ts` (`onload`, `onunload`)
-- [X] T008 [P] Create empty `styles.css`
-- [X] T009 Register view type constant `note-buddy-chat`
-
-**Checkpoint**: Plugin enables cleanly in Obsidian ✓
+- [ ] T001 Create project directory structure: src/, dist/, and .specify/ directories
+- [ ] T002 [P] Initialize package: Create package.json with name="note-buddy", version="0.1.0", Obsidian plugin metadata
+- [ ] T003 [P] Configure TypeScript: Create tsconfig.json with strict mode, ES2022 target, module resolution
+- [ ] T004 [P] Configure build: Create esbuild.config.mjs with entry point src/main.ts, output dist/main.js
+- [ ] T005 Initialize Bun: Create bun.lockb and verify Bun package manager is available
 
 ---
 
-## Phase 3: User Story 1 – Open Chat View from Ribbon (P1)
+## Phase 2: Foundational
 
-**Goal**: Open or focus a single chat view via ribbon icon
+**Goal**: Establish core plugin infrastructure
 
-- [X] T010 [P][US1] Create `ChatView` class extending `ItemView`
-- [X] T011 [US1] Register `ChatView` in `Plugin.onload`
-- [X] T012 [US1] Add ribbon icon (Lucide: `bot`) in `Plugin.onload`
-- [X] T013 [US1] Implement idempotent (no duplicates) view activation (no duplicates)
-- [X] T014 [US1] Ensure right sidebar is revealed when activating
-- [X] T015 [US1] Clean up view on `Plugin.onunload`
-
-**Checkpoint**:
-Ribbon icon reliably opens or focuses a single chat view. ✓
+- [ ] T006 Create plugin manifest: manifest.json with id="note-buddy", name="Note Buddy", version="0.1.0", minAppVersion="0.15.0"
+- [ ] T007 Create main plugin entry: src/main.ts with Plugin class implementing onload/onunload
+- [ ] T008 Add ribbon command: Register ribbon icon in onload using Lucide 'bot' icon to open chat view
+- [ ] T009 Add chat command registration: Register command in manifest.json to open chat view from command palette
 
 ---
 
-## Phase 4: User Story 2 – Basic Chat UI Layout (P1)
+## Phase 3: User Story 1 - Open Chat View from Ribbon
 
-**Goal**: Render static chat UI with basic send behavior
+**Priority**: P1
 
-- [X] T016 [US2] Implement `getViewType()` and `getDisplayText()` in `ChatView`
-- [X] T017 [US2] Implement `onOpen()` to render:
-  - header ("Note Buddy")
-  - scrollable message container
-  - input bar (textarea + Send button)
-- [X] T018 [US2] Implement send behavior:
-  - Enter sends, Shift+Enter inserts newline
-  - Log message to console
-  - Clear textarea
-- [X] T019 [US2] Implement `onClose()` cleanup
+**Goal**: User can click a ribbon icon to open/focus the chat sidebar view
 
-- [X] T020 [US2] Apply flex layout and Obsidian CSS variables in `styles.css`
+**Independent Test Criteria**:
+- Plugin enables successfully in Obsidian
+- Ribbon icon with bot symbol appears in left ribbon
+- Clicking icon opens chat view in right sidebar
+- Clicking icon again focuses existing view (no duplicates)
+- Command palette command also opens/focuses chat view
 
-**Checkpoint**:
-Chat UI renders correctly and behaves as expected in light/dark themes. ✓
+**Implementation Tasks**:
 
----
-
-## Phase 5: Validation & Polish
-
-- [ ] T021 Manual test: ribbon open/focus/reopen behavior
-- [ ] T022 Manual test: chat layout, keyboard handling
-- [ ] T023 Manual test: no duplicate views possible
-- [X] T024 Build and load plugin once more to confirm clean state ✓
+- [ ] T010 [US1] Create ChatView class: src/views/ChatView.ts extending ItemView with getViewType()="note-buddy-chat", getDisplayText()="Note Buddy", getIcon()="bot"
+- [ ] T011 [US1] Implement view management in plugin: Add ChatView instance tracking, openChatView() method, prevent duplicate views, use workspace.getLeaf('right') for sidebar placement
+- [ ] T012 [US1] Connect ribbon icon: Update ribbon command handler in src/main.ts to call plugin.openChatView()
+- [ ] T013 [US1] Connect command palette: Update command handler in src/main.ts to call plugin.openChatView()
 
 ---
 
-## Stop Condition (Important)
+## Phase 4: User Story 2 - Basic Chat UI Layout
 
-When:
-- User Story 1 works
-- User Story 2 works
-- Manual checks pass
+**Priority**: P1
 
-**Stop.**  
-Next functionality (OpenCode, streaming, persistence) must be a new spec.
+**Goal**: Chat view displays header, scroll area, and textarea with send button
+
+**Independent Test Criteria**:
+- Chat view renders with header showing "Note Buddy" title
+- Scroll area displays below header
+- Text input field appears at bottom
+- Send button appears next to textarea
+- Pressing Enter sends message, Shift+Enter inserts newline
+- Console logs message on send
+- Toast notification appears on send
+
+**Implementation Tasks**:
+
+- [ ] T014 [US2] Create HTML structure: src/views/ChatView.ts with container div, header h1, scroll-area div, input textarea, send button
+- [ ] T015 [P] [US2] Create styles.css: Define layout with flex column, full height, Obsidian CSS variables (--text-accent, --background-primary, --text-normal)
+- [ ] T016 [P] [US2] Apply styles to ChatView: Update src/views/ChatView.ts to load styles.css, assign container classes
+- [ ] T017 [US2] Implement send handler: Add event listener to send button, log to console, show toast via new Notice(), clear textarea
+
+---
+
+## Phase 5: Polish & Cross-Cutting Concerns
+
+**Goal**: Complete implementation, documentation, and code quality
+
+- [ ] T018 [P] Create README.md: Installation instructions, usage guide, keyboard shortcuts (Enter to send, Shift+Enter for newline)
+- [ ] T019 [P] Add inline comments: Document plugin lifecycle, view management, event handlers in src
+- [ ] T020 Add JSDoc type annotations: Document ChatView class, methods, and parameters
+- [ ] T021 Run TypeScript compiler: Verify no type errors with `bun run tsc --noEmit`
+- [ ] T022 Build plugin: Run `bun run build` to generate dist/main.js
+- [ ] T023 Verify bundle size: Ensure dist/main.js is reasonable size (<500KB for minimal plugin)
+
+---
+
+## Summary
+
+- **Total Tasks**: 23
+- **Setup Phase**: 5 tasks
+- **Foundational Phase**: 4 tasks
+- **User Story 1 (Open Chat View)**: 4 tasks
+- **User Story 2 (Basic Chat UI)**: 4 tasks
+- **Polish Phase**: 6 tasks
+
+**Parallel Opportunities Identified**: 3 parallel execution groups
+- Group 1: T002, T003, T004 (config files)
+- Group 2: T012, T013 (connection tasks)
+- Group 3: T018, T019 (documentation tasks)
+
+**MVP Scope**: User Story 1 (Open Chat View) + User Story 2 (Basic Chat UI Layout) = 8 implementation tasks
+**Independent Test Criteria**: Each user story has clear verification criteria
+**Implementation Strategy**: Incremental delivery - complete US1, verify, then complete US2
+
+---
+
+## Task Format Validation
+
+✅ All tasks follow required checklist format:
+- Checkbox: `- [ ]` present on all tasks
+- Task ID: Sequential T001-T023
+- [P] marker: Applied to parallelizable tasks (T002-T004, T012, T013, T018, T019)
+- [Story] label: Applied to user story tasks ([US1] for US1, [US2] for US2)
+- Description: Clear action with exact file path
+- File paths: All tasks specify exact file locations
+
+---
+
+## Verification Checklist
+
+Before starting implementation, verify:
+- [ ] Obsidian development environment is ready
+- [ ] Bun package manager is installed
+- [ ] TypeScript 5.x is available
+- [ ] esbuild is available
+- [ ] Lucide icons are available in Obsidian context
