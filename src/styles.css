@@ -1,0 +1,151 @@
+/* Note Buddy plugin styles */
+
+/* Reset and base styles */
+.note-buddy-plugin * {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+/* Chat view container */
+.note-buddy-chat-view {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background-color: var(--background-secondary);
+	font-family: var(--font-ui);
+	color: var(--text-normal);
+}
+
+/* Header */
+.note-buddy-header {
+	display: flex;
+	align-items: center;
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	background-color: var(--background-primary);
+}
+
+.note-buddy-header-title {
+	font-size: var(--font-ui-medium);
+	font-weight: 600;
+}
+
+/* Message area */
+.note-buddy-messages {
+	flex: 1;
+	overflow-y: auto;
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.note-buddy-message {
+	padding: 8px 12px;
+	border-radius: 8px;
+	max-width: 80%;
+}
+
+.note-buddy-message.user {
+	align-self: flex-end;
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.note-buddy-message.assistant {
+	align-self: flex-start;
+	background-color: var(--background-modifier-form-field);
+}
+
+/* Input area */
+.note-buddy-input-area {
+	display: flex;
+	gap: 8px;
+	padding: 12px 16px;
+	border-top: 1px solid var(--background-modifier-border);
+	background-color: var(--background-primary);
+}
+
+.note-buddy-input {
+	flex: 1;
+	min-height: 36px;
+	max-height: 120px;
+	padding: 8px 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	background-color: var(--background-secondary);
+	font-family: var(--font-ui);
+	font-size与其他: var(--font-ui-smaller);
+	resize: vertical;
+}
+
+.note-buddy-input:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+}
+
+.note-buddy-send-button {
+	width: 36px;
+	height: 36px;
+	border: none;
+	border-radius: 6px;
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.note-buddy-send-button:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+.note-buddy-send-button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* Toast notification */
+.note-buddy-toast {
+	position: fixed;
+	top: 60px;
+	right: 16px;
+	padding: 8px 16px;
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	font-size: var(--font-ui-smaller);
+	animation: fadeInOut 2s ease-in-out;
+	z-index: 1000;
+}
+
+@keyframes fadeInOut {
+	0% {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+	10% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	90% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	100% {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+}
+
+/* Empty state */
+.note-buddy-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}

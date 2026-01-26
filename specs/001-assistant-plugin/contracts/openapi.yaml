@@ -1,0 +1,23 @@
+# OpenAPI Specification: Note Buddy Plugin
+# Version: 1.0.0
+# Note: This feature has no external API endpoints. Plugin uses Obsidian internal API only.
+
+openapi: 3.0.0
+info:
+  title: Note Buddy Plugin
+  version: 1.0.0
+  description: |
+    Note Buddy is an Obsidian plugin that provides a sidebar chat view.
+    This initial feature establishes the UI foundation with no external API endpoints.
+
+    The plugin interacts with Obsidian's internal API for:
+    - Plugin lifecycle (onload, onunload)
+    - Ribbon icon registration
+    - View management (ItemView)
+    - Workspace leaf management
+    - Theme detection
+
+    No external HTTP/REST API is exposed or consumed in this feature.
+
+paths: {}
+components: {}

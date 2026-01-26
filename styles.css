@@ -1,0 +1,48 @@
+.note-buddy-chat {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	background-color: var(--background-secondary);
+}
+
+.note-buddy-chat h2 {
+	margin: 10px;
+	font-size: var(--font-ui-medium);
+	color: var(--text-normal);
+	font-weight: var(--font-semibold);
+}
+
+.message-container {
+	background-color: var(--background-primary-alt);
+	border-radius: var(--radius-md);
+	margin: 0 10px 10px 10px;
+}
+
+.input-bar textarea {
+	background-color: var(--background-primary);
+	color: var(--text-normal);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-sm);
+	font-family: var(--font-interface);
+	font-size: var(--font-ui-sm);
+}
+
+.input-bar textarea:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+}
+
+.input-bar button {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: var(--radius-sm);
+	font-family: var(--font-interface);
+	font-weight: var(--font-semibold);
+	font-size: var(--font-ui-sm);
+	transition: background-color 0.2s;
+}
+
+.input-bar button:hover {
+	background-color: var(--interactive-accent-hover);
+}

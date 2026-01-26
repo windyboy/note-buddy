@@ -1,0 +1,10 @@
+{
+  "id": "note-buddy",
+  "name": "Note Buddy",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "AI-powered assistant for your notes",
+  "author": "note-buddy",
+  "authorUrl": "",
+  "isDesktopOnly": false
+}
