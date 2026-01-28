@@ -11,7 +11,11 @@ export class ChatView extends ItemView {
 
   constructor(leaf: WorkspaceLeaf, private plugin: any) {
     super(leaf);
-    this.client = new OpenCodeClient(plugin.settings.serviceUrl);
+    this.client = new OpenCodeClient(
+      plugin.settings.serviceUrl,
+      plugin.settings.defaultModelId,
+      plugin.onModelUnavailable?.bind(plugin)
+    );
   }
 
   getViewType() {

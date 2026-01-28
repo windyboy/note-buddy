@@ -21,6 +21,12 @@ Context:
 - Q: Scalability requirements for data volume → A: Support up to 50 models per provider - This balances usability with reasonable limits.
 - Q: Protocol/versioning assumptions for OpenCode → A: RESTful JSON API v1.0 - This aligns with standard OpenCode protocols.
 
+### Session 2026-01-28
+
+- Q: What should happen when a user's previously selected model is no longer available from the server? → A: Fall back to server default and show a non-blocking notification that the previously selected model is unavailable
+- Q: Should the plugin automatically refresh the model list when settings are opened, or only when the user clicks "Refresh Models"? → A: Manual refresh only (user must click button every time)
+- Q: What should be displayed to the user while model discovery is in progress? → A: Show a loading indicator next to the "Refresh Models" button while keeping the rest of settings accessible
+
 ---
 
 ## User Scenarios & Testing *(mandatory)*
@@ -32,21 +38,21 @@ As a NoteBuddy plugin user, I want the plugin to discover available AI models fr
 **Why this priority**:  
 Without knowing which models the server supports, model selection is impossible.
 
-**Independent Test**:  
-Open plugin settings → refresh model list → verify models are loaded from server or an appropriate message is shown.
+**Independent Test**:
+Click "Refresh Models" button in settings → verify models are loaded from server or an appropriate message is shown.
 
 **Acceptance Scenarios**:
 
-1. **Given** the OpenCode server is running,  
-   **When** I open the plugin settings or click “Refresh Models”,  
-   **Then** the plugin calls the server capability endpoint and loads available providers and models.
+1. **Given** the OpenCode server is running,
+   **When** I click "Refresh Models" in the plugin settings,
+   **Then** a loading indicator appears next to the button, the plugin calls the server capability endpoint, and available providers and models are loaded.
 
-2. **Given** the OpenCode server is unreachable,  
-   **When** model discovery is attempted,  
+2. **Given** the OpenCode server is unreachable,
+   **When** model discovery is attempted,
    **Then** a clear connection error is displayed (reuse health check messaging).
 
-3. **Given** the OpenCode server does not support model discovery,  
-   **When** discovery is attempted,  
+3. **Given** the OpenCode server does not support model discovery,
+   **When** discovery is attempted,
    **Then** a non-blocking message is shown indicating that model selection is unavailable and the server default will be used.
 
 ---
@@ -71,9 +77,13 @@ Select a model → save settings → restart Obsidian → verify the selection p
    **When** I restart Obsidian,  
    **Then** the previously selected model remains selected.
 
-3. **Given** the server exposes only a single model,  
-   **When** I open settings,  
+3. **Given** the server exposes only a single model,
+   **When** I open settings,
    **Then** the model selection is auto-selected or disabled with a clear indication.
+
+4. **Given** a previously selected model is no longer available from the server,
+   **When** the plugin attempts to use it,
+   **Then** the plugin falls back to the server default and displays a non-blocking notification informing the user that their selected model is unavailable.
 
 ---
 
@@ -106,7 +116,7 @@ Select a model → send a message → verify the request payload includes the se
 ### Edge Cases
 
 - Model discovery endpoint is unavailable or returns an empty list.
-- Selected model becomes unavailable after it was saved.
+- Selected model becomes unavailable after it was saved (plugin falls back to server default with non-blocking notification).
 - Server ignores model selection due to version or configuration.
 - Network or server errors during discovery or send.
 
@@ -117,13 +127,16 @@ Select a model → send a message → verify the request payload includes the se
 ### Functional Requirements
 
 - **FR-001**: Plugin MUST retrieve available providers and models from the OpenCode server (e.g. via a model discovery endpoint).
-- **FR-002**: Plugin MUST provide a settings UI to select a default model (`providerID`, `modelID`).
-- **FR-003**: Selected default model MUST persist across Obsidian restarts.
-- **FR-004**: Plugin MUST send messages via the OpenCode server session API.
-- **FR-005**: When a default model is selected, the plugin MUST include `{ providerID, modelID }` in the message payload on a best-effort basis.
-- **FR-006**: Plugin MUST continue to function if the server ignores or does not support model selection.
-- **FR-007**: Plugin MUST NOT manage or store third-party provider API keys or provider base URLs.
-- **FR-008**: Plugin MUST display clear, actionable error messages for discovery and send failures.
+- **FR-002**: Plugin MUST provide a settings UI with a "Refresh Models" button to manually trigger model discovery.
+- **FR-003**: Plugin MUST display a loading indicator next to the "Refresh Models" button during discovery, while keeping the rest of the settings UI accessible.
+- **FR-004**: Plugin MUST provide a settings UI to select a default model (`providerID`, `modelID`).
+- **FR-005**: Selected default model MUST persist across Obsidian restarts.
+- **FR-006**: Plugin MUST send messages via the OpenCode server session API.
+- **FR-007**: When a default model is selected, the plugin MUST include `{ providerID, modelID }` in the message payload on a best-effort basis.
+- **FR-008**: Plugin MUST continue to function if the server ignores or does not support model selection.
+- **FR-009**: Plugin MUST NOT manage or store third-party provider API keys or provider base URLs.
+- **FR-010**: Plugin MUST display clear, actionable error messages for discovery and send failures.
+- **FR-011**: When a previously selected model becomes unavailable, the plugin MUST fall back to the server default and display a non-blocking notification to the user.
 
 ---
 

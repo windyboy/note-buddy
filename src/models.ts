@@ -6,10 +6,37 @@ export interface ModelDescriptor {
     owned_by: string;
 }
 
+// Provider and model types for capabilities endpoint
+export interface Provider {
+    id: string;
+    name: string;
+    models: Model[];
+}
+
+export interface Model {
+    id: string;
+    name: string;
+    description?: string;
+}
+
+export interface ModelSelection {
+    providerId: string;
+    modelId: string;
+}
+
+export interface CapabilitiesResponse {
+    providers: Provider[];
+}
+
 // Service settings (persisted in Obsidian plugin data)
 export interface ServiceSettings {
     serviceUrl: string;
     defaultModelId?: string;
+}
+
+// NoteBuddy settings extended with model selection
+export interface NoteBuddySettings extends ServiceSettings {
+    modelSelection?: ModelSelection;
 }
 
 export const defaultSettings: ServiceSettings = {
@@ -83,3 +110,6 @@ export interface MessageState {
     error?: string;
     sendTime?: number;
 }
+
+// Cache TTL for models (5 minutes in milliseconds)
+export const MODELS_CACHE_TTL = 5 * 60 * 1000;

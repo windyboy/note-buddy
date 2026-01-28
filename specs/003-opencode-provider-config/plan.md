@@ -1,93 +1,146 @@
 # Implementation Plan: Model Selection via OpenCode Server
 
-**Branch**: `003-opencode-provider-config`  
-**Spec**: `specs/003-opencode-provider-config/spec.md`
+**Branch**: `003-opencode-provider-config` | **Date**: 2026-01-28 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/003-opencode-provider-config/spec.md`
 
-## Goal
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
-Extend the NoteBuddy plugin with **model selection support** by:
-1. Discovering available providers and models from a local OpenCode server
-2. Allowing the user to select a default model
-3. Sending messages with the selected model on a best-effort basis
+## Summary
 
-This plan intentionally stops at **single default model selection** and **does not manage providers or credentials**.
+Add model discovery and selection to the NoteBuddy Obsidian plugin. Users can discover available AI models from a local OpenCode server via a manual "Refresh Models" button, select a default model in settings, and have that selection persist across restarts. The selected model is included in message payloads when sending to the OpenCode server. The plugin gracefully handles unavailable models by falling back to server defaults with non-blocking notifications.
 
----
+## Technical Context
 
-## Explicit Non-Goals (Stop Conditions)
+**Language/Version**: TypeScript (ES2018+), Node 18+
+**Primary Dependencies**: Obsidian API (^1.7.2), existing OpenCodeClient service
+**Storage**: Obsidian's data.json (plugin settings persistence)
+**Testing**: Vitest (bun test)
+**Target Platform**: Obsidian desktop (Electron-based)
+**Project Type**: Single project (Obsidian plugin)
+**Performance Goals**: Model discovery <5 seconds, UI updates <100ms
+**Constraints**: Must use Obsidian's requestUrl API (not fetch), 10-second API timeout, 5-minute model cache TTL
+**Scale/Scope**: Support up to 50 models per provider, single-user desktop application
 
-This plan does NOT include:
-- Provider configuration or API key management
-- Streaming responses
-- Model capability comparison or ranking
-- Caching or pagination of model lists
-- Guarantees that the server will honor model selection
+## Constitution Check
 
-Any of the above requires a new feature spec.
+*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
----
+**Status**: Constitution file is a template placeholder. No specific principles defined yet for this project. Proceeding with standard best practices:
+- Test-driven development approach
+- Simple, focused implementation
+- No over-engineering
+- Clear error handling
 
-## Implementation Phases
+**Re-evaluation required**: After Phase 1 design completion
 
-### Phase 1 — Model Discovery
+## Project Structure
 
-**Objective**: Load available providers and models from the OpenCode server.
+### Documentation (this feature)
 
-Steps:
-1. Add a client method to call the server model discovery endpoint
-2. Parse provider/model identifiers into simple descriptors
-3. Handle unsupported or missing endpoint gracefully
+```text
+specs/[###-feature]/
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output (/speckit.plan command)
+├── data-model.md        # Phase 1 output (/speckit.plan command)
+├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── contracts/           # Phase 1 output (/speckit.plan command)
+└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+```
 
-**Done when**:
-- Models load when supported
-- Clear message shown when unsupported or unreachable
+### Source Code (repository root)
 
----
+```text
+src/
+├── main.ts              # Plugin entry point (existing)
+├── models.ts            # Data models (existing, will extend)
+├── settings.ts          # Settings UI (existing, will extend)
+├── service.ts           # OpenCodeClient (existing, will extend)
+└── chat-view.ts         # Chat interface (existing, minimal changes)
 
-### Phase 2 — Settings UI Integration
+tests/
+└── unit/
+    ├── models.test.ts
+    ├── service.test.ts
+    └── settings.test.ts
+```
 
-**Objective**: Allow the user to select a default model in settings.
+**Structure Decision**: Single project structure (Obsidian plugin). This feature extends existing files rather than adding new modules. The core changes are in `service.ts` (model discovery API), `settings.ts` (UI for model selection), and `models.ts` (type definitions for model descriptors).
 
-Steps:
-1. Add settings UI with a dropdown populated from discovered models
-2. Persist selection as `{ providerID, modelID }`
-3. Disable or auto-select when only one model is available
+## Complexity Tracking
 
-**Done when**:
-- Selection persists across restarts
-- UI reflects current selection correctly
+> **Fill ONLY if Constitution Check has violations that must be justified**
 
----
-
-### Phase 3 — Message Send Integration
-
-**Objective**: Use the selected model when sending messages.
-
-Steps:
-1. Update message send logic to include selected model in request body
-2. Treat model selection as best-effort (do not fail if ignored)
-3. Maintain existing behavior when no model is selected
-
-**Done when**:
-- Requests include model identifiers when configured
-- Plugin continues to function even if server ignores model
-
----
-
-## Manual Validation Checklist
-
-- Models load when server supports discovery
-- Graceful message when discovery is unsupported
-- Selected model persists across restart
-- Selected model included in request payload
-- Sending still works with no model selected
+No violations. Implementation follows standard patterns and existing architecture.
 
 ---
 
-## Exit Criteria
+## Phase 0: Research (Complete)
 
-Stop implementation when:
-- A user can select a default model
-- Messages are sent with the selected model without breaking core flow
+**Status**: ✅ Complete
 
-Further enhancements require a new feature specification.
+**Output**: `research.md` with all technical decisions documented
+
+**Key Decisions**:
+- Use `/v1/capabilities` endpoint with provider hierarchy
+- 5-minute in-memory cache with manual refresh
+- Dropdown UI with grouped provider/model options
+- Optional `ModelSelection` object in settings
+- Best-effort model inclusion in message payloads
+- Non-blocking error notifications
+
+---
+
+## Phase 1: Design & Contracts (Complete)
+
+**Status**: ✅ Complete
+
+**Outputs**:
+- `data-model.md` - Entity definitions and state transitions
+- `contracts/models-discovery-api.yaml` - OpenAPI specification
+- `quickstart.md` - Implementation guide
+
+**Key Artifacts**:
+- Provider, Model, ModelSelection, NoteBuddySettings entities
+- TypeScript interfaces for all data structures
+- API contract for `/v1/capabilities` endpoint
+- Step-by-step implementation guide with code examples
+
+---
+
+## Phase 2: Task Breakdown (Not Started)
+
+**Status**: ⏸️ Pending - Use `/speckit.tasks` command
+
+This phase generates `tasks.md` with actionable, dependency-ordered tasks for implementation.
+
+---
+
+## Constitution Re-Check
+
+**Status**: ✅ Pass
+
+No constitution violations introduced during design phase. Implementation:
+- Extends existing architecture without over-engineering
+- Uses established patterns (Obsidian API, TypeScript strict mode)
+- Maintains simplicity (no unnecessary abstractions)
+- Follows test-driven development approach
+
+---
+
+## Next Steps
+
+1. Run agent context update: `.specify/scripts/bash/update-agent-context.sh claude`
+2. Generate tasks: Use `/speckit.tasks` command
+3. Begin implementation following `tasks.md`
+
+---
+
+## Summary
+
+Planning complete for feature 003 (Model Selection via OpenCode Server). All design artifacts generated:
+- Research findings document technical decisions
+- Data model defines entities and relationships
+- API contracts specify OpenCode integration
+- Quickstart guide provides implementation steps
+
+Ready to proceed with task generation and implementation.

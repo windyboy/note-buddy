@@ -1,21 +1,32 @@
-import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
+import { App, PluginSettingTab, Setting, Notice, debounce } from 'obsidian';
 import NoteBuddyPlugin from './main';
 import { OpenCodeClient } from './service';
-import { ModelDescriptor } from './models';
+import { Provider, ModelSelection } from './models';
 
 export class NoteBuddySettingTab extends PluginSettingTab {
   plugin: NoteBuddyPlugin;
+  private providers: Provider[] = [];
+  private isLoadingModels: boolean = false;
 
   constructor(app: App, plugin: NoteBuddyPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
 
-  async display(): Promise<void> {
+  async display(useCachedProviders?: boolean): Promise<void> {
     const { containerEl } = this;
     containerEl.empty();
 
     containerEl.createEl('h2', { text: 'NoteBuddy Settings' });
+
+    // Load providers from capabilities endpoint unless using cached (e.g. after Refresh)
+    if (!useCachedProviders) {
+      try {
+        await this.loadProviders();
+      } catch {
+        // Already handled in loadProviders (this.providers = []); continue to render
+      }
+    }
 
     new Setting(containerEl)
       .setName('Service URL')
@@ -65,52 +76,94 @@ export class NoteBuddySettingTab extends PluginSettingTab {
         })
       );
 
-    // Load models for dropdown
-    let models: ModelDescriptor[] = [];
+    // Display model selection dropdown
+    this.displayModelSelection(containerEl);
+
+    // Display refresh button
+    this.displayRefreshButton(containerEl);
+  }
+
+  private async loadProviders(client?: OpenCodeClient, forceRefresh?: boolean): Promise<void> {
+    if (this.isLoadingModels) {
+      return;
+    }
+
+    this.isLoadingModels = true;
+
     try {
-      const client = new OpenCodeClient(this.plugin.settings.serviceUrl);
-      models = await client.discoverModels();
+      const c = client ?? new OpenCodeClient(this.plugin.settings.serviceUrl, this.plugin.settings.defaultModelId);
+      this.providers = await c.getCapabilities(forceRefresh ?? false);
     } catch (error) {
-      // Models discovery failed, show message but continue
-      new Notice(`Failed to load models: ${(error as Error).message}`);
+      // Silently handle error; empty providers means "no models"
+      this.providers = [];
+      console.error('[NoteBuddy] Failed to load providers:', error);
+      throw error;
+    } finally {
+      this.isLoadingModels = false;
     }
+  }
 
-    // Auto-select if only one model and none selected
-    if (models.length === 1 && !this.plugin.settings.defaultModelId) {
-      this.plugin.settings.defaultModelId = models[0].id;
-      await this.plugin.saveSettings();
-    }
-
+  private displayModelSelection(containerEl: HTMLElement): void {
+    // Build dropdown options from providers
     const modelOptions: Record<string, string> = {};
-    modelOptions[''] = 'None (use server default)';
-    for (const model of models) {
-      modelOptions[model.id] = model.id;
+    modelOptions[''] = 'Use server default';
+
+    for (const provider of this.providers) {
+      for (const model of provider.models) {
+        const value = `${provider.id}/${model.id}`;
+        modelOptions[value] = `${provider.name} - ${model.name}`;
+      }
     }
+
+    // Get current selection (could be old format or new format)
+    const currentValue = this.getCurrentModelSelection();
 
     new Setting(containerEl)
       .setName('Default Model')
       .setDesc('Select the default AI model to use for conversations')
       .addDropdown(dropdown => dropdown
         .addOptions(modelOptions)
-        .setValue(this.plugin.settings.defaultModelId || '')
+        .setValue(currentValue)
         .onChange(async (value) => {
-          this.plugin.settings.defaultModelId = value || undefined;
+          if (value) {
+            const parts = value.split('/');
+            if (parts.length === 2) {
+              const modelSelection: ModelSelection = {
+                providerId: parts[0],
+                modelId: parts[1],
+              };
+              this.plugin.settings.defaultModelId = value;
+            }
+          } else {
+            this.plugin.settings.defaultModelId = undefined;
+          }
           await this.plugin.saveSettings();
         })
       );
+  }
 
-    new Setting(containerEl)
+  private getCurrentModelSelection(): string {
+    return this.plugin.settings.defaultModelId || '';
+  }
+
+  private displayRefreshButton(container: HTMLElement): void {
+    new Setting(container)
       .setName('Refresh Models')
       .setDesc('Reload the list of available models from the service')
       .addButton(button => button
         .setButtonText('Refresh')
         .onClick(async () => {
-          // Clear cache and reload
-          const client = new OpenCodeClient(this.plugin.settings.serviceUrl);
-          // Force refresh by clearing cache (implementation detail)
-          (client as any).cachedModels = null;
-          (client as any).modelsCacheTime = 0;
-          await this.display(); // Redisplay to reload
+          const client = new OpenCodeClient(this.plugin.settings.serviceUrl, this.plugin.settings.defaultModelId);
+          client.clearModelsCache();
+          try {
+            await this.loadProviders(client, true);
+            new Notice('Models refreshed');
+            await this.display(true);
+          } catch (error) {
+            console.error('[NoteBuddy] Failed to load providers:', error);
+            new Notice(`Failed to refresh models: ${(error as Error).message}`);
+            await this.display(true);
+          }
         })
       );
   }

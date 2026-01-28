@@ -1,7 +1,7 @@
-import { Plugin, WorkspaceLeaf } from 'obsidian';
-import { ChatView, VIEW_TYPE_CHAT } from './chat-view';
-import { ServiceSettings, SessionState, defaultSettings } from './models';
-import { NoteBuddySettingTab } from './settings';
+ import { Plugin, WorkspaceLeaf, Notice } from 'obsidian';
+ import { ChatView, VIEW_TYPE_CHAT } from './chat-view';
+ import { ServiceSettings, SessionState, defaultSettings } from './models';
+ import { NoteBuddySettingTab } from './settings';
 
 const DEFAULT_SETTINGS: ServiceSettings = defaultSettings;
 
@@ -63,6 +63,11 @@ export default class NoteBuddyPlugin extends Plugin {
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+
+  // Callback for when selected model is unavailable
+  onModelUnavailable(): void {
+    new Notice('Selected model is unavailable. Using server default instead.');
   }
 
   async saveSettings() {

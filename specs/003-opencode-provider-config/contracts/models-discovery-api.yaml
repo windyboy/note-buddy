@@ -1,36 +1,26 @@
 openapi: 3.0.3
 info:
-  title: OpenCode Server Model Discovery API
+  title: OpenCode Server Capabilities API
   version: 1.0.0
-  description: OpenAI-compatible API for discovering available AI models
+  description: API for discovering available AI providers and models from OpenCode server
 
 servers:
   - url: {baseUrl}
     description: Configurable OpenCode server instance
 
 paths:
-  /v1/models:
+  /v1/capabilities:
     get:
-      summary: List available models
-      description: Retrieve list of available AI models (OpenAI-compatible)
-      operationId: listModels
+      summary: Get server capabilities
+      description: Retrieve available providers and their models
+      operationId: getCapabilities
       responses:
         '200':
-          description: Successful response with list of models
+          description: Successful response with providers and models
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  object:
-                    type: string
-                    enum: [list]
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/ModelDescriptor'
-                    maxItems: 50
-                    description: List of available models
+                $ref: '#/components/schemas/CapabilitiesResponse'
         '500':
           description: Server error
           content:
@@ -40,30 +30,61 @@ paths:
 
 components:
   schemas:
-    ModelDescriptor:
+    CapabilitiesResponse:
+      type: object
+      required:
+        - providers
+      properties:
+        providers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Provider'
+          description: List of available providers
+          maxItems: 10
+      example:
+        providers:
+          - id: "anthropic"
+            name: "Anthropic"
+            models:
+              - id: "claude-3-5-sonnet-20241022"
+                name: "Claude 3.5 Sonnet"
+
+    Provider:
       type: object
       required:
         - id
-        - object
-        - created
-        - owned_by
+        - name
+        - models
       properties:
         id:
           type: string
-          description: Unique identifier for the model
-          example: "llama3:latest"
-        object:
+          description: Unique provider identifier
+          example: "anthropic"
+        name:
           type: string
-          enum: [model]
-          description: Always "model"
-        created:
-          type: integer
-          description: Unix timestamp
-          example: 1640995200
-        owned_by:
+          description: Human-readable provider name
+          example: "Anthropic"
+        models:
+          type: array
+          items:
+            $ref: '#/components/schemas/Model'
+          description: Models available from this provider
+          maxItems: 50
+
+    Model:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
           type: string
-          description: Organization or provider
-          example: "ollama"
+          description: Unique model identifier within provider
+          example: "claude-3-5-sonnet-20241022"
+        name:
+          type: string
+          description: Human-readable model name
+          example: "Claude 3.5 Sonnet"
 
     Error:
       type: object
