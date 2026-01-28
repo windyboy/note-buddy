@@ -1,7 +1,7 @@
-import { App, PluginSettingTab, Setting, Notice, debounce } from 'obsidian';
+import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import NoteBuddyPlugin from './main';
 import { OpenCodeClient } from './service';
-import { Provider, ModelSelection } from './models';
+import { Provider } from './models';
 
 export class NoteBuddySettingTab extends PluginSettingTab {
   plugin: NoteBuddyPlugin;
@@ -126,14 +126,7 @@ export class NoteBuddySettingTab extends PluginSettingTab {
         .setValue(currentValue)
         .onChange(async (value) => {
           if (value) {
-            const parts = value.split('/');
-            if (parts.length === 2) {
-              const modelSelection: ModelSelection = {
-                providerId: parts[0],
-                modelId: parts[1],
-              };
-              this.plugin.settings.defaultModelId = value;
-            }
+            this.plugin.settings.defaultModelId = value;
           } else {
             this.plugin.settings.defaultModelId = undefined;
           }

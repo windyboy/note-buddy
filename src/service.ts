@@ -1,13 +1,26 @@
-import { requestUrl, RequestUrlParam, Notice } from 'obsidian';
-import { ConnectionState, ConnectionStatus, SessionState, SendMessage, MessageResponse, MessagePart, ModelDescriptor, Provider, ModelSelection, MODELS_CACHE_TTL } from './models';
+import { requestUrl, RequestUrlParam } from 'obsidian';
+import {
+  BadRequestError,
+  ConnectionState,
+  ConnectionStatus,
+  MessageResponse,
+  NotFoundError,
+  OpenCodeConfigProvidersResponse,
+  OpenCodeProvider,
+  OpenCodeSession,
+  OpenCodePart,
+  Provider,
+  SendMessage,
+  SessionState,
+  MODELS_CACHE_TTL,
+} from './models';
 
 export class OpenCodeClient {
   private serviceUrl: string;
   private session: SessionState | null = null;
-  private cachedModels: ModelDescriptor[] | null = null;
-  private modelsCacheTime: number = 0;
   private cachedProviders: Provider[] | null = null;
   private providersCacheTime: number = 0;
+  private cachedDefaults: Record<string, string> | null = null;
   private defaultModelId?: string;
   private onModelUnavailable?: () => void;
 
@@ -60,39 +73,6 @@ export class OpenCodeClient {
     }
   }
 
-  async discoverModels(): Promise<ModelDescriptor[]> {
-    const now = Date.now();
-    if (this.cachedModels && (now - this.modelsCacheTime) < MODELS_CACHE_TTL) {
-      return this.cachedModels;
-    }
-
-    const url = `${this.serviceUrl}/v1/models`;
-
-    try {
-      const response = await this.request({
-        url,
-        method: 'GET',
-      });
-
-      if (response.status === 200) {
-        const models = response.json.data || response.json;
-        this.cachedModels = models;
-        this.modelsCacheTime = now;
-        return models;
-      } else if (response.status === 404) {
-        // Endpoint not supported, return empty list
-        this.cachedModels = [];
-        this.modelsCacheTime = now;
-        return [];
-      } else {
-        throw new Error(`HTTP ${response.status}: ${response.text}`);
-      }
-    } catch (error) {
-      const err = error as Error;
-      throw new Error(`Failed to discover models: ${err.message}`);
-    }
-  }
-
   async createSession(): Promise<SessionState> {
     const url = `${this.serviceUrl}/session`;
 
@@ -107,23 +87,50 @@ export class OpenCodeClient {
       });
 
       if (response.status === 200) {
-        const data = response.json as Record<string, unknown>;
-        // Contract (opencode-api.json) uses Session.id and Session.time.created
-        const sessionID = (data.id ?? data.sessionID) as string;
-        const time = data.time as { created?: number; updated?: number } | undefined;
-        const createTime = (time?.created ?? data.createTime) as number;
+        const data = response.json as OpenCodeSession;
         return {
-          sessionID,
-          createTime,
-          title: data.title as string | undefined,
+          sessionID: data.id,
+          createTime: data.time.created,
+          title: data.title,
         };
-      } else {
-        throw new Error(`HTTP ${response.status}: ${response.text}`);
       }
+
+      if (response.status === 400) {
+        const details = this.formatBadRequest(response.json as BadRequestError, response.text);
+        throw new Error(details);
+      }
+
+      throw new Error(`HTTP ${response.status}: ${response.text}`);
     } catch (error) {
       const err = error as Error;
       throw new Error(`Failed to create session: ${err.message}`);
     }
+  }
+
+  private formatBadRequest(payload: BadRequestError | unknown, fallbackText: string): string {
+    if (!payload || typeof payload !== 'object') {
+      return `Bad request: ${fallbackText || 'Unknown error'}`;
+    }
+    const p = payload as Partial<BadRequestError>;
+    const errText =
+      typeof p.errors === 'string'
+        ? p.errors
+        : p.errors
+          ? JSON.stringify(p.errors)
+          : '';
+    const dataText = p.data ? JSON.stringify(p.data) : '';
+    const msg = [errText, dataText].filter(Boolean).join(' ');
+    return msg ? `Bad request: ${msg}` : `Bad request: ${fallbackText || 'Unknown error'}`;
+  }
+
+  private formatNotFound(payload: NotFoundError | unknown, fallbackText: string): string {
+    if (!payload || typeof payload !== 'object') {
+      return fallbackText || 'Not found';
+    }
+    const p = payload as Partial<NotFoundError>;
+    const name = typeof p.name === 'string' ? p.name : '';
+    const data = p.data ? JSON.stringify(p.data) : '';
+    return [name, data].filter(Boolean).join(' ') || fallbackText || 'Not found';
   }
 
   private async sendMessageInternal(sessionID: string, message: SendMessage): Promise<MessageResponse> {
@@ -153,16 +160,25 @@ export class OpenCodeClient {
         } catch {
           throw new Error(`Invalid JSON response: ${raw.slice(0, 50)}${raw.length > 50 ? '...' : ''}`);
         }
-        return data;
-      } else if (response.status === 404) {
-        const errMessage = response.text || 'Session not found';
-        if (errMessage.includes('model') || errMessage.includes('Model')) {
-          throw new Error('Model not found');
+        if (!data || typeof data !== 'object' || !Array.isArray((data as any).parts)) {
+          throw new Error('Invalid response shape (expected {info, parts[]})');
         }
-        throw new Error('Session not found');
-      } else {
-        throw new Error(`HTTP ${response.status}: ${response.text}`);
+        return data;
       }
+
+      if (response.status === 400) {
+        // Contract: BadRequestError
+        const payload = response.json as BadRequestError;
+        throw new Error(this.formatBadRequest(payload, response.text));
+      }
+
+      if (response.status === 404) {
+        // Contract: NotFoundError (session not found)
+        const payload = response.json as NotFoundError;
+        throw new Error(`Session not found: ${this.formatNotFound(payload, response.text)}`);
+      }
+
+      throw new Error(`HTTP ${response.status}: ${response.text}`);
     } catch (error) {
       const err = error as Error;
       throw new Error(`Failed to send message: ${err.message}`);
@@ -177,7 +193,7 @@ export class OpenCodeClient {
 
     // Create message
     const message: SendMessage = {
-      parts: [{ text: input, role: 'user', type: 'text' }],
+      parts: [{ type: 'text', text: input }],
     };
 
     // Set model if defaultModelId is configured
@@ -198,7 +214,7 @@ export class OpenCodeClient {
     } catch (error) {
       const err = error as Error;
       // Fallback to server default if model is unavailable
-      if (err.message === 'Model not found' && message.model) {
+      if (message.model && this.isLikelyModelError(err)) {
         console.log('[NoteBuddy] Selected model unavailable, falling back to server default');
         if (this.onModelUnavailable) {
           this.onModelUnavailable();
@@ -213,8 +229,11 @@ export class OpenCodeClient {
     }
 
     // Extract assistant text
-    const assistantParts = response.parts.filter((part: MessagePart) => part.role === 'assistant');
-    const assistantText = assistantParts.map((part: MessagePart) => part.text).join('\n');
+    const assistantText = response.parts
+      .filter((part: OpenCodePart) => part.type === 'text')
+      .map((part: OpenCodePart) => (part.type === 'text' ? part.text : ''))
+      .filter(Boolean)
+      .join('\n');
 
     return assistantText;
   }
@@ -234,6 +253,7 @@ export class OpenCodeClient {
   clearModelsCache(): void {
     this.cachedProviders = null;
     this.providersCacheTime = 0;
+    this.cachedDefaults = null;
   }
 
   async getCapabilities(forceRefresh: boolean = false): Promise<Provider[]> {
@@ -254,10 +274,9 @@ export class OpenCodeClient {
       });
 
       if (response.status === 200) {
-        type OpenCodeProvider = { id: string; name: string; models?: Record<string, { id?: string; name?: string }> };
-        let data: { providers?: OpenCodeProvider[] };
+        let data: OpenCodeConfigProvidersResponse;
         try {
-          data = response.json;
+          data = response.json as OpenCodeConfigProvidersResponse;
         } catch {
           const preview = (response.text || '').trim().slice(0, 50);
           if (preview.toLowerCase().startsWith('<!')) {
@@ -267,7 +286,9 @@ export class OpenCodeClient {
           }
           throw new Error(`Invalid JSON response: ${preview}...`);
         }
-        const raw = data.providers || [];
+
+        const raw: OpenCodeProvider[] = data.providers || [];
+        this.cachedDefaults = data.default || {};
         // OpenCode returns providers[].models as object { [modelId]: Model }; normalize to Provider[] with models array
         const providers: Provider[] = raw.map((p: OpenCodeProvider) => ({
           id: p.id,
@@ -277,12 +298,6 @@ export class OpenCodeClient {
         this.cachedProviders = providers;
         this.providersCacheTime = now;
         return providers;
-      } else if (response.status === 404) {
-        // Endpoint not supported, return empty list
-        const emptyProviders: Provider[] = [];
-        this.cachedProviders = emptyProviders;
-        this.providersCacheTime = now;
-        return emptyProviders;
       } else {
         throw new Error(`HTTP ${response.status}: ${response.text}`);
       }
@@ -290,5 +305,12 @@ export class OpenCodeClient {
       const err = error as Error;
       throw new Error(`Failed to get capabilities: ${err.message}`);
     }
+  }
+
+  private isLikelyModelError(err: Error): boolean {
+    const msg = (err.message || '').toLowerCase();
+    // Best-effort heuristic for common server-side error strings when model is invalid.
+    // The contract provides structured errors on AssistantMessage.info.error, but request validation errors may surface as BadRequestError.
+    return msg.includes('model') && (msg.includes('not found') || msg.includes('invalid') || msg.includes('unknown'));
   }
 }

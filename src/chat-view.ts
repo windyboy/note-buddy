@@ -1,12 +1,16 @@
 import { ItemView, WorkspaceLeaf, Notice } from 'obsidian';
 import { OpenCodeClient } from './service';
-import { MessagePart, SendMessage, MessageResponse } from './models';
+import { OpenCodePart, SendMessage, MessageResponse } from './models';
 
 export const VIEW_TYPE_CHAT = 'note-buddy-chat-view';
 
+type UiChatItem =
+  | { kind: 'userText'; text: string }
+  | { kind: 'assistantPart'; part: OpenCodePart };
+
 export class ChatView extends ItemView {
   private client: OpenCodeClient;
-  private messages: MessagePart[] = [];
+  private messages: UiChatItem[] = [];
   private messagesContainer!: HTMLElement;
 
   constructor(leaf: WorkspaceLeaf, private plugin: any) {
@@ -105,7 +109,7 @@ export class ChatView extends ItemView {
       if (!message) return;
 
       // Add user message
-      this.messages.push({ text: message, role: 'user', type: 'text' });
+      this.messages.push({ kind: 'userText', text: message });
       this.renderMessages();
 
       textarea.value = '';
@@ -117,9 +121,9 @@ export class ChatView extends ItemView {
         }
 
         // Send message
-const sendData: SendMessage = {
-  parts: [{ text: message, role: 'user', type: 'text' }],
-};
+        const sendData: SendMessage = {
+          parts: [{ type: 'text', text: message }],
+        };
 
         // Set model if defaultModelId is configured
         if (this.plugin.settings.defaultModelId) {
@@ -137,7 +141,7 @@ const sendData: SendMessage = {
           response = await this.client.sendMessageToSession(this.plugin.sessionState.sessionID, sendData);
         } catch (sendError) {
           const err = sendError as Error;
-          if (err.message.includes('Session not found') || err.message.includes('404')) {
+          if (err.message.includes('Session not found')) {
             // Create new session and retry once
             this.plugin.sessionState = await this.client.createSession();
             response = await this.client.sendMessageToSession(this.plugin.sessionState.sessionID, sendData);
@@ -147,7 +151,9 @@ const sendData: SendMessage = {
         }
 
         // Add assistant response
-        this.messages.push(...response.parts);
+        for (const part of response.parts) {
+          this.messages.push({ kind: 'assistantPart', part });
+        }
         this.renderMessages();
 
         // Scroll to bottom
@@ -187,19 +193,81 @@ const sendData: SendMessage = {
       return;
     }
 
-    for (const message of this.messages) {
-      const messageEl = this.messagesContainer.createDiv({
-        cls: `nb-message nb-message-${message.role}`,
-      });
-      messageEl.createSpan({ text: message.text });
+    for (const item of this.messages) {
+      if (item.kind === 'userText') {
+        const messageEl = this.messagesContainer.createDiv({ cls: 'nb-message nb-message-user' });
+        messageEl.createSpan({ text: item.text });
+        messageEl.style.cssText = `
+          padding: 0.75rem;
+          background-color: var(--background-modifier-accent);
+          border-radius: 0.5rem;
+          font-size: 0.9rem;
+          align-self: flex-end;
+          max-width: 70%;
+        `;
+        continue;
+      }
+
+      const part = item.part;
+      const messageEl = this.messagesContainer.createDiv({ cls: 'nb-message nb-message-assistant' });
       messageEl.style.cssText = `
         padding: 0.75rem;
-        background-color: ${message.role === 'user' ? 'var(--background-modifier-accent)' : 'var(--background-secondary)'};
+        background-color: var(--background-secondary);
         border-radius: 0.5rem;
         font-size: 0.9rem;
-        align-self: ${message.role === 'user' ? 'flex-end' : 'flex-start'};
+        align-self: flex-start;
         max-width: 70%;
       `;
+
+      // Contract: response.parts is a Part union; render by part.type.
+      switch (part.type) {
+        case 'text':
+          messageEl.createSpan({ text: part.text });
+          break;
+        case 'reasoning':
+          messageEl.createSpan({ text: part.text });
+          break;
+        case 'tool':
+          messageEl.createEl('strong', { text: `Tool: ${part.tool}` });
+          messageEl.createEl('pre', { text: JSON.stringify(part.state ?? {}, null, 2) });
+          break;
+        case 'patch':
+          messageEl.createEl('strong', { text: `Patch: ${part.hash}` });
+          messageEl.createEl('pre', { text: (part.files || []).join('\n') });
+          break;
+        case 'file':
+          messageEl.createEl('strong', { text: `File: ${part.filename ?? part.url}` });
+          messageEl.createEl('div', { text: `mime: ${part.mime}` });
+          messageEl.createEl('div', { text: `url: ${part.url}` });
+          break;
+        case 'agent':
+          messageEl.createEl('strong', { text: `Agent: ${part.name}` });
+          break;
+        case 'step_start':
+          messageEl.createEl('strong', { text: `Step start${part.title ? `: ${part.title}` : ''}` });
+          break;
+        case 'step_finish':
+          messageEl.createEl('strong', { text: `Step finish${part.title ? `: ${part.title}` : ''}` });
+          break;
+        case 'snapshot':
+          messageEl.createEl('strong', { text: 'Snapshot' });
+          messageEl.createEl('pre', { text: JSON.stringify(part, null, 2) });
+          break;
+        case 'retry':
+          messageEl.createEl('strong', { text: 'Retry' });
+          messageEl.createEl('pre', { text: JSON.stringify(part, null, 2) });
+          break;
+        case 'compaction':
+          messageEl.createEl('strong', { text: 'Compaction' });
+          messageEl.createEl('pre', { text: JSON.stringify(part, null, 2) });
+          break;
+        case 'unknown':
+          messageEl.createEl('strong', {
+            text: `Unsupported part type: ${part.originalType}`,
+          });
+          messageEl.createEl('pre', { text: JSON.stringify(part, null, 2) });
+          break;
+      }
     }
   }
 }
