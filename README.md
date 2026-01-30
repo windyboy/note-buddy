@@ -6,41 +6,41 @@ AI-powered assistant for your notes.
 
 1. Install dependencies:
    ```bash
-   npm install
+   bun install
    ```
 
 2. Run in development mode:
    ```bash
-   npm run dev
+   bun run dev
    ```
 
 3. Build for production:
    ```bash
-   npm run build
+   bun run build
    ```
 
 ## Testing
 
 Run tests:
 ```bash
-npm test
+bun test
 ```
 
 Run tests with UI:
 ```bash
-npm run test:ui
+bun run test:ui
 ```
 
 Run tests with coverage:
 ```bash
-npm run test:coverage
+bun run test:coverage
 ```
 
 ## Installation
 
 1. Build the plugin:
    ```bash
-   npm run build
+   bun run build
    ```
 
 2. Copy the built files to your Obsidian vault:
