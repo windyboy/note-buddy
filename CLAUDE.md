@@ -1,111 +1,54 @@
----
-description: Use Bun instead of Node.js, npm, pnpm, or vite.
-globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
-alwaysApply: false
----
+# CLAUDE.md
 
-Default to using Bun instead of Node.js.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
-- Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Use `bunx <package> <command>` instead of `npx <package> <command>`
-- Bun automatically loads .env, so don't use dotenv.
+## Project Overview
 
-## APIs
+Obsidian plugin that connects to an OpenCode-compatible API server (default: `http://127.0.0.1:4096`) for AI-powered chat interactions.
 
-- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
-- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
-- `Bun.redis` for Redis. Don't use `ioredis`.
-- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
-- `WebSocket` is built-in. Don't use `ws`.
-- Prefer `Bun.file` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa.
+## Commands
 
-## Testing
-
-Use `bun test` to run tests.
-
-```ts#index.test.ts
-import { test, expect } from "bun:test";
-
-test("hello world", () => {
-  expect(1).toBe(1);
-});
+```bash
+bun run dev      # Development with watch
+bun run build    # Production build
+bun test         # Run tests
+bun vitest <file>  # Run specific test
 ```
 
-## Frontend
+## Architecture
 
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
+### Core Flow
+User input → `ChatView` → `OpenCodeClient` → OpenCode API → Response parts rendered by type
 
-Server:
+### Key Components
+- `src/main.ts`: Plugin lifecycle, settings persistence, session state
+- `src/chat-view.ts`: UI rendering, message history (`UiChatItem[]`), automatic session recovery
+- `src/service.ts`: API client with 5-min model cache, automatic fallback to server default on model errors
+- `src/settings.ts`: Service URL config, model selection dropdown (provider-grouped)
+- `src/models.ts`: TypeScript contracts (source: `specs/003-opencode-provider-config/contracts/opencode-api.json`)
 
-```ts#index.ts
-import index from "./index.html"
+### OpenCode API
+- `GET /global/health`: Health check
+- `POST /session`: Create session
+- `POST /session/{sessionID}/message`: Send message with optional `model: {providerID, modelID}`
+- `GET /config/providers`: Model discovery (cached 5 min)
 
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
-  }
-})
-```
+### State
+**Persisted**: `serviceUrl`, `defaultModelId` (format: `providerId/modelId`)
+**In-Memory**: `sessionState` (plugin), `messages` (ChatView), `cachedProviders` (OpenCodeClient)
 
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
+## Key Design Decisions
 
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
-```
+**Model Selection**: `providerId/modelId` format, 5-min cache, automatic fallback to server default on errors
 
-With the following `frontend.tsx`:
+**Session Management**: Single session per plugin instance, auto-recovery on 404 (create new session and retry once)
 
-```tsx#frontend.tsx
-import React from "react";
-import { createRoot } from "react-dom/client";
+**Part Rendering**: Switch on `part.type` to handle all OpenCode response types (text, reasoning, tool, patch, file, agent, etc.)
 
-// import .css files directly and it works
-import './index.css';
+## Specification System
 
-const root = createRoot(document.body);
+Features documented in `specs/<number>-<name>/` with standard artifacts: `spec.md`, `research.md`, `data-model.md`, `plan.md`, `tasks.md`, `quickstart.md`. Use `/speckit.*` commands for workflow automation.
 
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
+## Branch Strategy
 
-root.render(<Frontend />);
-```
-
-Then, run index.ts
-
-```sh
-bun --hot ./index.ts
-```
-
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
+Main branch: `001-opencode-client`. Feature branches named after spec number (e.g., `003-opencode-provider-config`).

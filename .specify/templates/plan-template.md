@@ -31,7 +31,15 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+| Principle | Gate | Pass |
+|-----------|------|------|
+| I. Plugin Architecture | Uses Obsidian Plugin base class, API patterns, and lifecycle management | ☐ |
+| II. Data Model & Storage | Uses loadData/saveData API, proper validation, migration plan if needed | ☐ |
+| III. TypeScript & Type Safety | Strict mode enabled, proper interfaces, no unjustified `any` types | ☐ |
+| IV. Testing Strategy | Tests written BEFORE implementation, mocks for Obsidian API | ☐ |
+| V. User Experience | Input validation, user-friendly errors, graceful degradation | ☐ |
+
+**All gates must pass (☑) before proceeding to implementation.**
 
 ## Project Structure
 

@@ -15,11 +15,7 @@ unzip note-buddy-1.0.0.zip -d ~/.obsidian/plugins/note-buddy
 ### 2. Install Dependencies
 
 ```bash
-# Using Bun (recommended)
 bun install
-
-# Or using npm
-npm install
 ```
 
 ### 3. Enable in Obsidian
@@ -79,9 +75,6 @@ The view automatically adapts to Obsidian's theme:
 
 ```bash
 bun --version  # Bun 1.0+
-# OR
-node -v  # Node.js 18+
-npm -v   # npm 9+
 ```
 
 ### Setup

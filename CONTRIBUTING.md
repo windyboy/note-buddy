@@ -4,14 +4,14 @@
 
 - Build the plugin before committing:
   ```bash
-  npm run build
+  bun run build
   ```
 
 ## Testing
 
 - All tests must pass before committing:
   ```bash
-  npm test
+  bun test
   ```
 
 ## Code Style
