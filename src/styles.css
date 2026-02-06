@@ -76,7 +76,7 @@
 	border-radius: 6px;
 	background-color: var(--background-secondary);
 	font-family: var(--font-ui);
-	font-size与其他: var(--font-ui-smaller);
+	font-size: var(--font-ui-smaller);
 	resize: vertical;
 }
 
@@ -148,4 +148,387 @@
 	height: 100%;
 	color: var(--text-muted);
 	font-size: var(--font-ui-smaller);
+}
+
+/* ============================================
+   UI Enhancement Styles (Phase 1-6)
+   ============================================ */
+
+/* Chat Container Base */
+.nb-chat-container {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	gap: 0.75rem;
+	padding: 1rem;
+	background: var(--background-secondary);
+	position: relative;
+}
+
+.nb-messages-container {
+	flex: 1;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 1rem;
+	background: var(--background-primary);
+	border-radius: 0.75rem;
+	border: 1px solid var(--background-modifier-border);
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* Message Bubbles */
+.nb-message {
+	padding: 0.75rem;
+	border-radius: 0.5rem;
+	font-size: 0.9rem;
+	max-width: 70%;
+	word-wrap: break-word;
+	line-height: 1.5;
+}
+
+.nb-message-user {
+	align-self: flex-end;
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.nb-message-assistant {
+	align-self: flex-start;
+	background-color: var(--background-secondary);
+	color: var(--text-normal);
+	border: 1px solid var(--background-modifier-border);
+}
+
+.nb-message-system {
+	align-self: center;
+	background-color: var(--background-secondary);
+	color: var(--text-muted);
+	text-align: center;
+	max-width: 80%;
+	border: 1px dashed var(--background-modifier-border);
+}
+
+.nb-message-error {
+	align-self: flex-start;
+	background-color: var(--background-modifier-error);
+	color: var(--text-error);
+	border-left: 3px solid var(--text-error);
+}
+
+/* Loading Indicator */
+.nb-loading-indicator {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.75rem;
+	align-self: flex-start;
+	max-width: 70%;
+}
+
+.nb-loading-dots {
+	display: flex;
+	gap: 0.25rem;
+}
+
+.nb-loading-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background-color: var(--text-muted);
+	animation: nb-bounce 1.4s infinite ease-in-out both;
+}
+
+.nb-loading-dot:nth-child(1) {
+	animation-delay: -0.32s;
+}
+
+.nb-loading-dot:nth-child(2) {
+	animation-delay: -0.16s;
+}
+
+@keyframes nb-bounce {
+	0%, 80%, 100% {
+		transform: scale(0);
+		opacity: 0.5;
+	}
+	40% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+/* Input Container */
+.nb-input-container {
+	display: flex;
+	gap: 0.5rem;
+	padding: 0.75rem;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 0.75rem;
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.nb-chat-input {
+	flex: 1;
+	min-height: 48px;
+	max-height: 160px;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 0.5rem;
+	background-color: var(--background-secondary);
+	color: var(--text-normal);
+	resize: vertical;
+	font-family: inherit;
+	font-size: 0.9rem;
+	transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.nb-chat-input:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--interactive-accent) 20%, transparent);
+}
+
+.nb-send-button {
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: 0.5rem;
+	cursor: pointer;
+	font-weight: 500;
+	transition: background-color 0.2s;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.nb-send-button:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+.nb-send-button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* Error Display & Retry Button */
+.nb-error-container {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.75rem;
+	background-color: var(--background-modifier-error);
+	border-left: 3px solid var(--text-error);
+	border-radius: 0.5rem;
+	align-self: flex-start;
+	max-width: 70%;
+}
+
+.nb-error-message {
+	color: var(--text-error);
+	font-size: 0.9rem;
+}
+
+.nb-retry-button {
+	align-self: flex-start;
+	padding: 0.375rem 0.75rem;
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: 0.25rem;
+	cursor: pointer;
+	font-size: 0.85rem;
+	transition: background-color 0.2s;
+}
+
+.nb-retry-button:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+/* Toolbar */
+.nb-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem 0.75rem;
+	border-radius: 0.75rem;
+	background-color: var(--background-primary);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.nb-toolbar-title {
+	font-size: 0.95rem;
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+.nb-toolbar-actions {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.nb-toolbar-button {
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	background-color: transparent;
+	color: var(--text-normal);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 0.25rem;
+	cursor: pointer;
+	font-size: 0.85rem;
+	transition: all 0.2s;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.nb-toolbar-button:hover {
+	background-color: var(--background-modifier-hover);
+	border-color: var(--interactive-accent);
+}
+
+/* Empty State */
+.nb-empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.35rem;
+	color: var(--text-muted);
+	text-align: center;
+	padding: 1.5rem 1rem;
+	border: 1px dashed var(--background-modifier-border);
+	border-radius: 0.75rem;
+	background: var(--background-secondary);
+}
+
+.nb-empty-title {
+	font-size: 0.95rem;
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+.nb-empty-subtitle {
+	font-size: 0.85rem;
+	line-height: 1.4;
+}
+
+/* New Message Indicator */
+.nb-new-message-indicator {
+	display: flex;
+	justify-content: center;
+}
+
+.nb-new-message-button {
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	border-radius: 999px;
+	padding: 0.25rem 0.75rem;
+	font-size: 0.8rem;
+	cursor: pointer;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+	transition: transform 0.2s, border-color 0.2s, background-color 0.2s;
+}
+
+.nb-new-message-button:hover {
+	border-color: var(--interactive-accent);
+	background-color: var(--background-modifier-hover);
+}
+
+/* Settings Panel */
+.nb-settings-group {
+	margin-bottom: 1.5rem;
+}
+
+.nb-settings-group-title {
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--text-normal);
+	margin-bottom: 0.75rem;
+	padding-bottom: 0.5rem;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.nb-settings-validation-error {
+	color: var(--text-error);
+	font-size: 0.85rem;
+	margin-top: 0.25rem;
+}
+
+.nb-settings-validation-success {
+	color: var(--text-success);
+	font-size: 0.85rem;
+	margin-top: 0.25rem;
+}
+
+/* Part Labels */
+.nb-part-label {
+	font-weight: 600;
+	color: var(--text-muted);
+	font-size: 0.85rem;
+	margin-bottom: 0.25rem;
+}
+
+/* Markdown Rendering */
+.nb-message code {
+	background-color: var(--code-background);
+	color: var(--code-normal);
+	padding: 0.125rem 0.25rem;
+	border-radius: 0.25rem;
+	font-family: var(--font-monospace);
+	font-size: 0.85em;
+}
+
+.nb-message pre {
+	background-color: var(--code-background);
+	color: var(--code-normal);
+	padding: 0.75rem;
+	border-radius: 0.375rem;
+	overflow-x: auto;
+	margin: 0.5rem 0;
+}
+
+.nb-message pre code {
+	background-color: transparent;
+	padding: 0;
+}
+
+.nb-message strong {
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+.nb-message em {
+	font-style: italic;
+}
+
+.nb-message ul,
+.nb-message ol {
+	margin: 0.5rem 0;
+	padding-left: 1.5rem;
+}
+
+.nb-message li {
+	margin: 0.25rem 0;
+}
+
+/* Hover States */
+.nb-message:hover {
+	opacity: 0.95;
+}
+
+.nb-toolbar-button:active,
+.nb-send-button:active,
+.nb-retry-button:active {
+	transform: scale(0.98);
 }

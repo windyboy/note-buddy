@@ -1,42 +1,60 @@
-# Opencode Provider Config Task Plan
+# Task Plan: Refactor chat-view.ts to use pluginData-based session architecture
 
-**Goal**: Add opencode provider configuration with API URL, API key, and model selection functionality to the NoteBuddy plugin.
+## Current State
+- chat-view.ts uses old architecture: `this.messages` array, `this.plugin.sessionState`
+- Uses OpenCodeClient with `createSession()` and `sendMessageToSession()` (non-streaming)
+- No session list UI, no session management UI
 
-**Status**: `in_progress`
+## Target State (per 005-chat-page spec)
+- Use `plugin.pluginData.sessions` for session storage
+- Load active session from `pluginData.activeSessionId`
+- Render messages from `activeSession.messages`
+- Add session list sidebar (Obsidian file explorer style)
+- Session switching, creation, deletion
+- Streaming message responses
+- Token usage tracking
+- Model selection per session
 
-## Phases
+## Implementation Steps
 
-| Phase | Status | Description | Output |
-|-------|--------|-------------|--------|
-| 1 | `completed` | Generate branch short name and check existing branches | branch name: 001-opencode-provider-config |
-| 2 | `completed` | Create feature branch and spec structure | BRANCH_NAME: 001-opencode-provider-config, SPEC_FILE: /Users/windy/Projects/ai/note-buddy/specs/001-opencode-provider-config/spec.md |
-| 3 | `completed` | Load and analyze spec template | template sections understood |
-| 4 | `completed` | Parse feature description and extract requirements | key concepts identified |
-| 5 | `completed` | Write initial specification | spec.md created |
-| 6 | `completed` | Create quality checklist | checklists/requirements.md created |
-| 7 | `completed` | Run validation against checklist | all items pass, no clarifications needed |
-| 8 | `completed` | Handle clarifications (if needed) | no clarifications needed |
-| 9 | `completed` | Report completion | ready for next phase |
+### Step 1: Update Class Properties
+- Remove `this.messages: UiChatItem[] = []`
+- Add `activeSession: ChatSession | undefined`
+- Add `isStreaming: boolean = false`
+- Add `currentAbortController: AbortController | null = null`
+- Add `currentReply: string = ''`
+- Update `this.client` initialization to use `pluginData.settings`
 
-## Current Context
-- Working directory: `/Users/windy/Projects/ai/note-buddy`
-- Existing features: 001-assistant-plugin, 002-ai-service
-- Feature description: "add opencode provider config, api url and key, model select"
-- Template location: `.specify/templates/spec-template.md`
+### Step 2: Add Session State Management
+- Add `loadChatState()`: loads active session from pluginData
+- Add `getCurrentSession()`: returns active session from plugin
+- Add `switchSession()`: switches active session
 
-## Decisions Made
-- Short name: "opencode-provider-config" (3 words, captures essence)
-- Next number: 1 (no existing branches found)
-- Will run create-new-feature.sh script next
+### Step 3: Add Session List UI
+- Add `renderSessionList()`: renders sidebar session list
+- Add `onNewSession()`: creates new session
+- Add `onDeleteSession()`: deletes session
+- Style like Obsidian file explorer
 
-## Errors Encountered
-| Error | Attempt | Resolution |
-|-------|---------|------------|
-| session-catchup script path wrong | 1 | Used correct full path |
-| - | - | - |
+### Step 4: Update Message Rendering
+- Update `renderMessages()`: render from `activeSession.messages`
+- Add loading state indicator
+- Add token usage display
 
-## Notes
-- This appears to be a configuration feature for adding opencode provider settings
-- Need to determine next branch number after checking existing branches
-- Spec should focus on WHAT and WHY, not HOW</content>
-<parameter name="filePath">task_plan.md
+### Step 5: Implement Streaming sendMessage
+- Replace non-streaming API with streaming
+- Use AbortController for cancellation
+- Update `activeSession.messages` in real-time
+- Track token usage
+
+### Step 6: Add Model Selection
+- Add model dropdown per session
+- Update session model on change
+
+## Files to Modify
+- src/chat-view.ts (complete refactor)
+
+## Dependencies
+- src/main.ts (already has pluginData methods)
+- src/models.ts (already has ChatSession, ChatMessage types)
+

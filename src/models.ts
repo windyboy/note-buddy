@@ -57,6 +57,7 @@ export interface ModelSelection {
 export interface ServiceSettings {
     serviceUrl: string;
     defaultModelId?: string;
+    tokenBudget?: number; // User-configurable token budget (in tokens)
 }
 
 // NoteBuddy settings extended with model selection
@@ -327,3 +328,144 @@ export interface MessageState {
 
 // Cache TTL for models (5 minutes in milliseconds)
 export const MODELS_CACHE_TTL = 5 * 60 * 1000;
+
+// --- UI Enhancement Types (Phase 1) ---
+
+// Extended message type for UI state management
+export interface UiMessage {
+  id: string;
+  kind: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: Date;
+  status: 'sending' | 'sent' | 'error';
+  error?: string;
+}
+
+// UI state management
+export interface UIState {
+  isLoading: boolean;
+  isConnected: boolean;
+  error: string | null;
+}
+
+// --- Chat Persistence Types (Phase 5: Standard Chat Page) ---
+
+export interface MessageUsage {
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+}
+
+export interface ChatMessage {
+  id: string; // UUID v4
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: number; // Unix timestamp
+  usage?: MessageUsage;
+}
+
+export interface SessionUsage {
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalTokens: number;
+}
+
+export interface ChatSession {
+  id: string; // UUID v4
+  name: string;
+  modelId: string; // Format: "providerId/modelId"
+  messages: ChatMessage[];
+  usage: SessionUsage;
+  createdAt: number; // Unix timestamp
+  updatedAt: number; // Unix timestamp
+}
+
+// Extended plugin data with chat persistence
+export interface PluginData extends ServiceSettings {
+  sessions: ChatSession[];
+  activeSessionId?: string;
+}
+
+export const MAX_MESSAGES_PER_SESSION = 1000;
+
+export function trimSessionMessages(messages: ChatMessage[], maxMessages: number = MAX_MESSAGES_PER_SESSION): ChatMessage[] {
+  if (messages.length <= maxMessages) {
+    return messages;
+  }
+  return messages.slice(messages.length - maxMessages);
+}
+
+export const defaultPluginData: PluginData = {
+  ...defaultSettings,
+  sessions: [],
+  activeSessionId: undefined
+};
+
+// Type guards for validation
+export function isPluginData(data: unknown): data is PluginData {
+  if (!data || typeof data !== 'object') return false;
+  const d = data as Record<string, unknown>;
+  if (typeof d.serviceUrl !== 'string') return false;
+  if (!Array.isArray(d.sessions)) return false;
+  return true;
+}
+
+export function asPluginData(data: unknown): PluginData {
+  if (!isPluginData(data)) {
+    const serviceUrl =
+      typeof (data as { serviceUrl?: unknown } | null)?.serviceUrl === 'string'
+        ? ((data as { serviceUrl?: string }).serviceUrl ?? defaultSettings.serviceUrl)
+        : defaultSettings.serviceUrl;
+    return { ...defaultPluginData, serviceUrl };
+  }
+  return data;
+}
+
+export function isChatMessage(msg: unknown): msg is ChatMessage {
+  if (!msg || typeof msg !== 'object') return false;
+  const m = msg as Record<string, unknown>;
+  if (typeof m.id !== 'string') return false;
+  if (typeof m.role !== 'string' || !['user', 'assistant', 'system'].includes(m.role)) return false;
+  if (typeof m.content !== 'string') return false;
+  if (typeof m.timestamp !== 'number') return false;
+  return true;
+}
+
+export function asChatMessage(msg: unknown): ChatMessage {
+  if (!isChatMessage(msg)) {
+    return {
+      id: crypto.randomUUID(),
+      role: 'user',
+      content: String(msg || ''),
+      timestamp: Date.now()
+    };
+  }
+  return msg;
+}
+
+export function isChatSession(session: unknown): session is ChatSession {
+  if (!session || typeof session !== 'object') return false;
+  const s = session as Record<string, unknown>;
+  if (typeof s.id !== 'string') return false;
+  if (typeof s.name !== 'string') return false;
+  if (typeof s.modelId !== 'string') return false;
+  if (!Array.isArray(s.messages)) return false;
+  if (typeof s.createdAt !== 'number') return false;
+  if (typeof s.updatedAt !== 'number') return false;
+  return true;
+}
+
+export function asChatSession(session: unknown): ChatSession {
+  if (!isChatSession(session)) {
+    return {
+      id: crypto.randomUUID(),
+      name: 'New Chat',
+      modelId: 'default',
+      messages: [],
+      usage: { totalInputTokens: 0, totalOutputTokens: 0, totalTokens: 0 },
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+  }
+  return session;
+}

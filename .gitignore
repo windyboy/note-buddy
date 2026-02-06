@@ -5,3 +5,9 @@ main.js
 coverage/
 .vitest/
 dist/
+build/
+*.tmp
+*.swp
+.env*
+.vscode/
+.idea/
